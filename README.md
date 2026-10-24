@@ -1,0 +1,150 @@
+# Toba Tix
+
+Aplikasi pemesanan tiket kapal penyeberangan dan wisata di Danau Toba. Proyek 1 matakuliah Pengembangan Aplikasi Berbasis Web (individu).
+
+> Data pelabuhan, kapal, jadwal, dan harga di aplikasi ini adalah **data contoh**, bukan data resmi.
+
+## Fitur
+
+- Cari jadwal berdasarkan asal, tujuan, tanggal (dengan paginasi); sisa kursi dan tarif tampil per jadwal.
+- Pemesanan dengan banyak penumpang (dewasa/anak), total harga live; harga final selalu dihitung server.
+- Pembayaran simulasi dengan hitung mundur 15 menit; booking kadaluarsa otomatis batal dan kuota kembali.
+- Tiket dengan kode QR, pembatalan booking (kuota dikembalikan), verifikasi tiket publik.
+- Admin: kelola pelabuhan, kapal, rute (+tarif), jadwal, dan check-in tiket.
+- Keamanan: bcrypt, JWT, validasi zod, helmet, CORS terbatas, rate limit pada `/auth`, query terparameter, otorisasi per resource.
+
+## Tech stack
+
+| Lapisan | Teknologi |
+|---|---|
+| Backend | Node.js 20+, Express, better-sqlite3 (SQLite), zod, JWT, bcryptjs, helmet, express-rate-limit |
+| Frontend | Vue 3 (Vite), Vue Router, Pinia, Axios, Tailwind CSS, qrcode |
+| Test | Jest + Supertest (backend), Vitest + Vue Test Utils (frontend), ESLint |
+| CI/CD | Jenkins (`Jenkinsfile`), Docker, docker-compose |
+
+## ERD
+
+```mermaid
+erDiagram
+  USERS ||--o{ BOOKINGS : membuat
+  PORTS ||--o{ ROUTES : "asal / tujuan"
+  ROUTES ||--o{ FARES : punya
+  ROUTES ||--o{ SCHEDULES : dijadwalkan
+  BOATS ||--o{ SCHEDULES : melayani
+  SCHEDULES ||--o{ BOOKINGS : dipesan
+  BOOKINGS ||--|{ TICKETS : berisi
+
+  USERS { int id PK string name string email UK string password_hash string role }
+  PORTS { int id PK string name UK }
+  BOATS { int id PK string name string type int capacity }
+  ROUTES { int id PK int origin_port_id FK int destination_port_id FK int duration_min }
+  FARES { int id PK int route_id FK string category int price }
+  SCHEDULES { int id PK int route_id FK int boat_id FK string departure_at int capacity int booked string status }
+  BOOKINGS { int id PK string code UK int user_id FK int schedule_id FK int total string status string created_at }
+  TICKETS { int id PK int booking_id FK string passenger_name string category int price string code UK string checked_in_at }
+```
+
+## Endpoint API (prefix `/api`)
+
+Respons sukses `{ data, message }`, respons gagal `{ message, errors? }`.
+
+| Method | Path | Akses | Keterangan |
+|---|---|---|---|
+| POST | `/auth/register` | publik | Daftar (role selalu customer) |
+| POST | `/auth/login` | publik | Login, mengembalikan JWT |
+| GET | `/auth/me` | login | Profil sendiri |
+| GET | `/ports` | publik | Daftar pelabuhan |
+| GET | `/routes` | publik | Daftar rute + tarif |
+| GET | `/schedules?origin=&destination=&date=&page=&limit=` | publik | Jadwal open, masa depan; `origin`/`destination` = id pelabuhan, `date` = YYYY-MM-DD (WIB) |
+| GET | `/schedules/:id` | publik | Detail jadwal |
+| POST/PUT/DELETE | `/ports`, `/ports/:id` | admin | CRUD pelabuhan |
+| GET/POST/PUT/DELETE | `/boats`, `/boats/:id` | admin | CRUD kapal |
+| POST/PUT/DELETE | `/routes`, `/routes/:id` | admin | CRUD rute + tarif (`fares: {dewasa, anak}`) |
+| GET | `/schedules/admin/list` | admin | Semua jadwal termasuk lampau |
+| POST/PUT/DELETE | `/schedules`, `/schedules/:id` | admin | CRUD jadwal |
+| POST | `/bookings` | customer | `{ schedule_id, passengers: [{ name, category }] }`, maks. 10 |
+| GET | `/bookings` | customer | Booking milik sendiri |
+| GET | `/bookings/:code` | pemilik/admin | Detail booking + tiket |
+| POST | `/bookings/:code/pay` | pemilik | Simulasi bayar |
+| POST | `/bookings/:code/cancel` | pemilik/admin | Batal + kembalikan kuota |
+| GET | `/tickets/:code` | publik | Verifikasi tiket (nama disamarkan) |
+| POST | `/tickets/:code/checkin` | admin | Check-in (paid, hari keberangkatan, sekali) |
+
+Kode status: 400 JSON rusak, 401 tanpa/invalid token, 403 role/kepemilikan salah, 404, 409 konflik (kursi tidak cukup, sudah check-in, dst.), 422 validasi, 500 tanpa detail internal.
+
+## Menjalankan di komputer lokal (dari `git clone`)
+
+Prasyarat: Node.js 20 atau lebih baru, Git.
+
+```bash
+git clone <URL-REPO-ANDA> toba-tix
+cd toba-tix
+```
+
+**Backend**
+
+```bash
+cd backend
+npm install
+cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
+# Edit .env: isi JWT_SECRET (min. 16 karakter acak), SEED_ADMIN_PASSWORD, SEED_CUSTOMER_PASSWORD
+npm run db:seed             # membuat database + data contoh
+npm run dev                 # API di http://localhost:3000/api (cek /api/health)
+```
+
+**Frontend** (terminal baru)
+
+```bash
+cd frontend
+npm install
+cp .env.example .env        # VITE_API_URL=http://localhost:3000/api
+npm run dev                 # buka http://localhost:5173
+```
+
+**Akun demo:** `admin@tobatix.test` dan `customer@tobatix.test`; password adalah nilai `SEED_ADMIN_PASSWORD` dan `SEED_CUSTOMER_PASSWORD` yang Anda isi di `backend/.env`.
+
+**Alternatif Docker:** isi `backend/.env`, lalu `docker compose up --build`; frontend di http://localhost:8080.
+
+## Menjalankan test dan lint
+
+```bash
+cd backend  && npm test && npm run lint
+cd frontend && npm test && npm run lint
+```
+
+Test backend memakai SQLite in-memory (`DB_PATH=:memory:`) sehingga tidak menyentuh data asli.
+
+## Jenkins
+
+1. Pasang plugin NodeJS, JUnit, Pipeline; tambahkan instalasi NodeJS bernama `node-20` (atau ubah nama di `Jenkinsfile`).
+2. Buat job **Pipeline** dengan "Pipeline script from SCM" yang menunjuk repo ini.
+3. Jalankan **Build with Parameters**. Stage: Checkout, Install, Lint, Test, Build Frontend, Archive, Deploy (opsional).
+4. Hasil test tampil di halaman build ("Test Result") dan stage view; artefak `frontend/dist` tersimpan. Ambil tangkapan layar untuk laporan.
+5. Deploy otomatis (opsional): buat credential *Secret text* `BACKEND_DEPLOY_HOOK` dan `FRONTEND_DEPLOY_HOOK` berisi URL deploy hook platform Anda, lalu centang `DEPLOY`.
+
+## Deploy online (panduan umum)
+
+Bagian bertanda **[VERIFIKASI]** harus dicek di dokumentasi platform yang Anda pilih; nama menu dan batas layanan bisa berubah.
+
+1. **Backend** di platform hosting Node.js. Root directory `backend`, build `npm install`, start `npm start`. Isi environment variable:
+   `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `DB_PATH`, `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. Variabel `PORT` biasanya disediakan platform **[VERIFIKASI]**.
+2. **Penyimpanan SQLite.** SQLite adalah file. Jika filesystem platform bersifat sementara, data (akun baru, booking) **hilang saat restart/redeploy**. Aplikasi otomatis melakukan seed ulang saat start jika DB kosong, sehingga data contoh dan akun demo selalu ada, tetapi data baru tidak bertahan. Untuk data persisten, arahkan `DB_PATH` ke volume/disk persisten jika platform menyediakannya **[VERIFIKASI]** (misalnya `/data/tobatix.db`).
+3. **Frontend** di hosting static. Root `frontend`, build `npm run build`, output `dist`. Isi `VITE_API_URL=https://<url-backend>/api` sebelum build (nilai ditanam saat build). Aktifkan fallback SPA (semua path ke `index.html`) **[VERIFIKASI cara di platform]**.
+4. Setelah URL frontend diketahui, set `CORS_ORIGIN` backend ke URL tersebut lalu redeploy backend.
+5. Uji: buka `<url-backend>/api/health`, lalu buka frontend dan coba login, cari jadwal, booking.
+
+## Keputusan desain
+
+- Token JWT disimpan di `sessionStorage` (hilang saat tab ditutup, tidak ada `v-html` untuk data pengguna). Cookie httpOnly lebih tahan XSS tetapi butuh perlindungan CSRF dan konfigurasi lintas domain, jadi tidak dipakai di proyek ini.
+- Waktu keberangkatan disimpan sebagai ISO UTC; tampilan dan filter tanggal memakai WIB (UTC+7).
+- Pembatalan booking berstatus `paid` tidak memodelkan pengembalian dana (di luar lingkup).
+- `bcryptjs` dipakai agar tidak perlu kompilasi native di Jenkins/Docker.
+
+## Struktur
+
+```
+backend/   Express API (modules/{auth,ports,boats,routes,schedules,bookings,tickets})
+frontend/  Vue 3 + Vite
+docs/      Draft dokumen proyek dan skrip video demo
+Jenkinsfile, docker-compose.yml
+```
