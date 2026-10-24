@@ -1,12 +1,3 @@
-// Pipeline Toba Tix (monorepo: backend Express + frontend Vue).
-// Alur mengikuti proyek contoh (ifs24032-pabwe2026-sk-p5-vue): paket ZIP -> publish ke
-// Jenkins userContent -> request redeploy ke platform lewat API -> polling status.
-// Bedanya: ada DUA paket (backend-app.zip dan frontend-app.zip), masing-masing dideploy ke website_id sendiri.
-//
-// Variabel yang harus tersedia di Jenkins (Manage Jenkins > System > Global properties > Environment variables),
-// sama seperti proyek contoh, ditambah dua ID website:
-//   URL_REDEPLOY, URL_PROGRESS, DEPLOY_TOKEN
-//   WEBSITE_ID_BACKEND, WEBSITE_ID_FRONTEND
 pipeline {
 
     agent any
@@ -14,25 +5,8 @@ pipeline {
     options {
         timestamps()
         skipDefaultCheckout(true)
-        // Hentikan stage berikutnya jika build sudah UNSTABLE/FAILURE
+        // Stop later stages if a publisher marks the build UNSTABLE/FAILURE mid-run
         skipStagesAfterUnstable()
-    }
-
-    parameters {
-        string(
-            name: 'VITE_API_URL',
-            defaultValue: 'http://localhost:3000/api',
-            description: 'URL API backend yang sudah online (akhiri dengan /api). Ditanam ke frontend saat build.'
-        )
-        booleanParam(name: 'DEPLOY_BACKEND', defaultValue: true, description: 'Deploy paket backend')
-        booleanParam(name: 'DEPLOY_FRONTEND', defaultValue: true, description: 'Deploy paket frontend')
-    }
-
-    environment {
-        CI = 'true'
-        VITE_API_URL = "${params.VITE_API_URL}"
-        WEBSITE_ID_BACKEND = '<id-backend>'
-        WEBSITE_ID_FRONTEND = '<id-frontend>'
     }
 
     stages {
@@ -41,27 +15,15 @@ pipeline {
         // CHECKOUT
         // ============================================================
         stage('Checkout') {
+            agent {
+                docker {
+                    image 'oven/bun:alpine'
+                    reuseNode true
+                }
+            }
+
             steps {
                 checkout scm
-            }
-        }
-
-        // ============================================================
-        // VALIDASI PARAMETER (gagal cepat sebelum buang waktu build)
-        // ============================================================
-        stage('Validate Parameters') {
-            steps {
-                script {
-                    if (params.DEPLOY_FRONTEND && params.VITE_API_URL.contains('localhost')) {
-                        error('VITE_API_URL masih localhost. Isi dengan URL backend online (.../api) atau matikan DEPLOY_FRONTEND.')
-                    }
-                    if (params.DEPLOY_BACKEND && !env.WEBSITE_ID_BACKEND) {
-                        error('Environment variable WEBSITE_ID_BACKEND belum diisi di Jenkins.')
-                    }
-                    if (params.DEPLOY_FRONTEND && !env.WEBSITE_ID_FRONTEND) {
-                        error('Environment variable WEBSITE_ID_FRONTEND belum diisi di Jenkins.')
-                    }
-                }
             }
         }
 
@@ -69,13 +31,10 @@ pipeline {
         // INSTALL DEPENDENCIES
         // ============================================================
         stage('Install Dependencies') {
-            // Bun hanya untuk install (lockfile: bun.lock). Image alpine (musl) agar binary
-            // native better-sqlite3 cocok dengan stage berikutnya (node:22-alpine).
             agent {
                 docker {
                     image 'oven/bun:alpine'
                     reuseNode true
-                    args '-e HOME=/tmp -e BUN_INSTALL_CACHE_DIR=/tmp/.bun-cache'
                 }
             }
 
@@ -83,24 +42,23 @@ pipeline {
                 sh '''
                     set -e
 
-                    echo "=== Install Backend ==="
-                    (cd backend && bun install)
+                    echo "=== Installing Dependencies ==="
 
-                    echo "=== Install Frontend ==="
-                    (cd frontend && bun install)
+                    bun install
+
+                    echo "=== Dependencies Installed ==="
                 '''
             }
         }
 
         // ============================================================
-        // LINT
+        // TEST
         // ============================================================
-        stage('Lint') {
+        stage('Test') {
             agent {
                 docker {
-                    image 'node:22-alpine'
+                    image 'node:24-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
                 }
             }
 
@@ -108,97 +66,17 @@ pipeline {
                 sh '''
                     set -e
 
-                    echo "=== Lint Backend ==="
-                    (cd backend && npm run lint)
+                    echo "=== Running Tests with Coverage ==="
 
-                    echo "=== Lint Frontend ==="
-                    (cd frontend && npm run lint)
-                '''
-            }
-        }
+                    if [ -f angular.json ]; then
+                        echo "Framework: Angular"
+                        npx ng test --coverage
+                    else
+                        echo "Framework: React, Next.js, Vue, Nuxt, Svelte, or SvelteKit"
+                        npx vitest run --coverage
+                    fi
 
-        // ============================================================
-        // TEST BACKEND (Jest + Supertest, SQLite in-memory)
-        // ============================================================
-        stage('Test Backend') {
-            agent {
-                docker {
-                    image 'node:22-alpine'
-                    reuseNode true
-                    args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
-                }
-            }
-
-            steps {
-                sh '''
-                    set -e
-
-                    echo "=== Backend Tests with Coverage ==="
-                    cd backend
-                    npm run test:ci
-
-                    # Sonar membaca path relatif dari root repo: tambahkan prefix backend/ bila path relatif
-                    sed -i -E 's#^SF:([^/])#SF:backend/\\1#' coverage/lcov.info
-                '''
-            }
-
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'backend/junit.xml'
-                }
-            }
-        }
-
-        // ============================================================
-        // TEST FRONTEND (Vitest + Vue Test Utils)
-        // ============================================================
-        stage('Test Frontend') {
-            agent {
-                docker {
-                    image 'node:22-alpine'
-                    reuseNode true
-                    args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
-                }
-            }
-
-            steps {
-                sh '''
-                    set -e
-
-                    echo "=== Frontend Tests with Coverage ==="
-                    cd frontend
-                    npm run test:ci
-
-                    sed -i -E 's#^SF:([^/])#SF:frontend/\\1#' coverage/lcov.info
-                '''
-            }
-
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'frontend/junit.xml'
-                }
-            }
-        }
-
-        // ============================================================
-        // BUILD FRONTEND (memastikan build produksi berhasil)
-        // ============================================================
-        stage('Build Frontend') {
-            agent {
-                docker {
-                    image 'node:22-alpine'
-                    reuseNode true
-                    args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
-                }
-            }
-
-            steps {
-                sh '''
-                    set -e
-
-                    echo "=== Build Frontend (VITE_API_URL=$VITE_API_URL) ==="
-                    cd frontend
-                    npm run build
+                    echo "=== Tests Passed ==="
                 '''
             }
         }
@@ -230,18 +108,18 @@ pipeline {
                     echo "        TRIVY SECURITY SCAN"
                     echo "======================================"
 
+                    echo "=== Trivy Version ==="
                     trivy --version
 
-                    trivy fs \\
-                        --cache-dir .trivy-cache \\
-                        --scanners vuln \\
-                        --severity HIGH,CRITICAL \\
-                        --ignore-unfixed \\
-                        --skip-dirs coverage \\
-                        --skip-dirs .trivy-cache \\
-                        --format sarif \\
-                        --output trivy-results.sarif \\
-                        --exit-code 1 \\
+                    echo "=== Trivy Scan ==="
+
+                    trivy fs \
+                        --cache-dir .trivy-cache \
+                        --scanners vuln \
+                        --severity HIGH,CRITICAL \
+                        --format sarif \
+                        --output trivy-results.sarif \
+                        --exit-code 1 \
                         .
 
                     echo "=== Trivy Result ==="
@@ -251,7 +129,9 @@ pipeline {
 
             post {
                 always {
-                    // failOnError harus false: kegagalan karena HIGH/CRITICAL sudah ditangani oleh trivy --exit-code 1
+                    // failOnError must be false: otherwise Warnings NG can mark the
+                    // whole build FAILURE while later stages still run (all green, badge red).
+                    // Build failure on HIGH/CRITICAL comes from trivy --exit-code 1 above.
                     recordIssues(
                         enabledForFailure: true,
                         failOnError: false,
@@ -285,7 +165,9 @@ pipeline {
                         set -e
 
                         echo "=== SonarQube Analysis ==="
+
                         sonar-scanner
+
                         echo "=== SonarQube Analysis Completed ==="
                     '''
                 }
@@ -304,7 +186,7 @@ pipeline {
         }
 
         // ============================================================
-        // PACKAGE APPLICATION (dua paket ZIP)
+        // PACKAGE APPLICATION
         // ============================================================
         stage('Package Application') {
             agent {
@@ -320,39 +202,39 @@ pipeline {
                     set -e
 
                     echo "======================================"
-                    echo "       CREATING APPLICATION PACKAGES"
+                    echo "       CREATING APPLICATION PACKAGE"
                     echo "======================================"
 
                     apk add --no-cache zip unzip
 
-                    rm -f backend-app.zip frontend-app.zip
+                    rm -f latest-app.zip
 
-                    # Backend: isi folder backend/ berada di root ZIP. Secret (.env) dan database tidak ikut.
-                    (cd backend && zip -r ../backend-app.zip . \\
-                        -x "node_modules/*" \\
-                        -x "coverage/*" \\
-                        -x "data/*" \\
-                        -x "*.db" -x "*.db-shm" -x "*.db-wal" \\
-                        -x ".env" \\
-                        -x "junit.xml")
+                    zip -r latest-app.zip . \
+                        -x "node_modules/*" \
+                        -x ".git/*" \
+                        -x ".env" \
+                        -x ".env.*" \
+                        -x "coverage/*" \
+                        -x ".next/*" \
+                        -x "out/*" \
+                        -x ".nuxt/*" \
+                        -x ".output/*" \
+                        -x ".svelte-kit/*" \
+                        -x ".angular/*" \
+                        -x "dist/*" \
+                        -x "build/*" \
+                        -x ".trivy-cache/*" \
+                        -x "latest-app.zip" \
+                        -x "trivy-results.sarif" \
+                        -x ".docs/*"
 
-                    # Frontend: VITE_API_URL ditanam lewat .env.production karena build dijalankan platform dari ZIP ini.
-                    echo "VITE_API_URL=${VITE_API_URL}" > frontend/.env.production
-                    (cd frontend && zip -r ../frontend-app.zip . \\
-                        -x "node_modules/*" \\
-                        -x "coverage/*" \\
-                        -x "dist/*" \\
-                        -x ".env" \\
-                        -x "junit.xml")
-                    rm -f frontend/.env.production
+                    echo "=== Application Package Created ==="
 
-                    echo "=== Packages Created ==="
-                    ls -lh backend-app.zip frontend-app.zip
+                    ls -lh latest-app.zip
 
-                    echo "=== Backend Package Content ==="
-                    unzip -l backend-app.zip | head -40
-                    echo "=== Frontend Package Content ==="
-                    unzip -l frontend-app.zip | head -40
+                    echo "=== Package Content ==="
+
+                    unzip -l latest-app.zip
                 '''
             }
         }
@@ -364,13 +246,21 @@ pipeline {
 
             steps {
 
+                // ========================================================
+                // 1. ARCHIVE ARTIFACT KE JENKINS
+                // ========================================================
+
                 archiveArtifacts(
-                    artifacts: 'backend-app.zip, frontend-app.zip',
+                    artifacts: 'latest-app.zip',
                     fingerprint: true,
                     allowEmptyArchive: false
                 )
 
                 script {
+
+                    // ====================================================
+                    // 2. BUAT IDENTITAS APPLICATION
+                    // ====================================================
 
                     def appName = env.JOB_NAME
                         .replaceAll('[^a-zA-Z0-9._-]', '-')
@@ -382,49 +272,57 @@ pipeline {
                     echo "Application Name: ${appName}"
                     echo "Build ID: ${buildId}"
 
+                    // ====================================================
+                    // 3. COPY KE USER CONTENT
+                    // ====================================================
+
+                    sh """
+                        set -e
+
+                        echo "======================================"
+                        echo "       PUBLISHING USER CONTENT"
+                        echo "======================================"
+
+                        docker exec cicd-jenkins \
+                            mkdir -p \
+                            "/var/jenkins_home/userContent/applications/${appName}/${buildId}"
+
+                        docker cp \
+                            latest-app.zip \
+                            "cicd-jenkins:/var/jenkins_home/userContent/applications/${appName}/${buildId}/latest-app.zip"
+
+                        echo "=== Published File ==="
+
+                        docker exec cicd-jenkins \
+                            ls -lh \
+                            "/var/jenkins_home/userContent/applications/${appName}/${buildId}/latest-app.zip"
+                    """
+
+                    // ====================================================
+                    // 4. BUAT PUBLIC ARTIFACT URL
+                    // ====================================================
+
                     def jenkinsBaseUrl = env.BUILD_URL
                         .substring(0, env.BUILD_URL.indexOf('/job/'))
                         .replace('localhost', 'host.docker.internal')
 
-                    for (String part : ['backend', 'frontend']) {
-                        sh """
-                            set -e
+                    env.ARTIFACT_URL =
+                        "${jenkinsBaseUrl}/userContent/applications/${appName}/${buildId}/latest-app.zip"
 
-                            echo "=== Publishing ${part}-app.zip ==="
+                    echo "======================================"
+                    echo "       APPLICATION PUBLISHED"
+                    echo "======================================"
 
-                            docker exec cicd-jenkins \\
-                                mkdir -p \\
-                                "/var/jenkins_home/userContent/applications/${appName}/${buildId}"
-
-                            docker cp \\
-                                ${part}-app.zip \\
-                                "cicd-jenkins:/var/jenkins_home/userContent/applications/${appName}/${buildId}/${part}-app.zip"
-
-                            docker exec cicd-jenkins \\
-                                ls -lh \\
-                                "/var/jenkins_home/userContent/applications/${appName}/${buildId}/${part}-app.zip"
-                        """
-                    }
-
-                    env.BACKEND_ARTIFACT_URL =
-                        "${jenkinsBaseUrl}/userContent/applications/${appName}/${buildId}/backend-app.zip"
-                    env.FRONTEND_ARTIFACT_URL =
-                        "${jenkinsBaseUrl}/userContent/applications/${appName}/${buildId}/frontend-app.zip"
-
-                    echo "Backend Artifact URL : ${env.BACKEND_ARTIFACT_URL}"
-                    echo "Frontend Artifact URL: ${env.FRONTEND_ARTIFACT_URL}"
+                    echo "Artifact URL:"
+                    echo "${env.ARTIFACT_URL}"
                 }
             }
         }
 
         // ============================================================
-        // DEPLOY APPLICATION (backend dulu, lalu frontend)
+        // DEPLOY APPLICATION
         // ============================================================
         stage('Deploy Application') {
-            when {
-                expression { return params.DEPLOY_BACKEND || params.DEPLOY_FRONTEND }
-            }
-
             agent {
                 docker {
                     image 'curlimages/curl:8.15.0'
@@ -435,12 +333,156 @@ pipeline {
 
             steps {
                 script {
-                    if (params.DEPLOY_BACKEND) {
-                        deployZip('BACKEND', env.WEBSITE_ID_BACKEND, env.BACKEND_ARTIFACT_URL)
+
+                    echo "=========================================="
+                    echo "       START APPLICATION DEPLOYMENT"
+                    echo "=========================================="
+
+                    echo "Artifact URL:"
+                    echo "${env.ARTIFACT_URL}"
+
+                    // ==================================================
+                    // 1. REQUEST REDEPLOYMENT
+                    // ==================================================
+
+                    echo ""
+                    echo "=== Request Redeployment ==="
+
+                    def redeployResponse = sh(
+                        script: '''
+                            set -e
+
+                            curl -sS --fail-with-body \
+                                -X POST "$URL_REDEPLOY" \
+                                -H "Content-Type: application/json" \
+                                -d "{
+                                    \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                                    \\"website_id\\": \\"$WEBSITE_ID\\",
+                                    \\"source_url\\": \\"$ARTIFACT_URL\\",
+                                    \\"source_type\\": \\"jenkins\\"
+                                }"
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Redeploy Response:"
+                    echo redeployResponse
+
+                    // ==================================================
+                    // 2. POLLING DEPLOYMENT PROGRESS
+                    // ==================================================
+
+                    echo ""
+                    echo "=== Waiting For Deployment ==="
+
+                    def maxAttempts = 120
+                    def attempt = 0
+                    def deploymentStatus = 'IN_PROGRESS'
+
+                    while (deploymentStatus == 'IN_PROGRESS') {
+
+                        attempt++
+
+                        if (attempt > maxAttempts) {
+                            error(
+                                "Deployment timeout. " +
+                                "Status masih IN_PROGRESS setelah " +
+                                "${maxAttempts} attempts."
+                            )
+                        }
+
+                        sleep time: 5, unit: 'SECONDS'
+
+                        echo ""
+                        echo "=== Checking Deployment Progress (${attempt}/${maxAttempts}) ==="
+
+                        def progressResponse = sh(
+                            script: '''
+                                set -e
+
+                                curl -sS --fail-with-body \
+                                    -X POST "$URL_PROGRESS" \
+                                    -H "Content-Type: application/json" \
+                                    -d "{
+                                        \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                                        \\"website_id\\": \\"$WEBSITE_ID\\"
+                                    }"
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
+                        echo "Progress Response:"
+                        echo progressResponse
+
+                        // ==================================================
+                        // PARSE JSON
+                        // ==================================================
+
+                        def json = readJSON text: progressResponse
+
+                        deploymentStatus = json?.data?.status
+                            ?.toString()
+                            ?.toUpperCase()
+
+                        if (!deploymentStatus) {
+                            error(
+                                "Response progress tidak memiliki data.status"
+                            )
+                        }
+
+                        echo "Deployment Status: ${deploymentStatus}"
+
+                        // ==================================================
+                        // SUCCESS
+                        // ==================================================
+
+                        if (deploymentStatus == 'SUCCESS') {
+
+                            echo ""
+                            echo "=========================================="
+                            echo "       ✅ DEPLOYMENT SUCCESS"
+                            echo "=========================================="
+
+                            break
+                        }
+
+                        // ==================================================
+                        // FAIL
+                        // ==================================================
+
+                        if (deploymentStatus == 'FAIL') {
+
+                            echo ""
+                            echo "=========================================="
+                            echo "       ❌ DEPLOYMENT FAILED"
+                            echo "=========================================="
+
+                            def deploymentLog =
+                                json?.data?.log
+                                    ?: 'Deployment failed tanpa log.'
+
+                            echo ""
+                            echo "========== DEPLOYMENT LOG =========="
+                            echo deploymentLog
+                            echo "===================================="
+
+                            error(
+                                "Deployment gagal untuk website " +
+                                "${WEBSITE_ID}"
+                            )
+                        }
+
+                        // ==================================================
+                        // OTHER STATUS
+                        // ==================================================
+
+                        echo "Deployment masih berjalan..."
                     }
-                    if (params.DEPLOY_FRONTEND) {
-                        deployZip('FRONTEND', env.WEBSITE_ID_FRONTEND, env.FRONTEND_ARTIFACT_URL)
-                    }
+
+                    echo ""
+                    echo "=========================================="
+                    echo "       DEPLOYMENT FINISHED"
+                    echo "=========================================="
                 }
             }
         }
@@ -460,125 +502,26 @@ pipeline {
 
         success {
             echo "=========================================="
-            echo "       PIPELINE SUCCESS"
+            echo "       ✅ PIPELINE SUCCESS"
             echo "=========================================="
             echo "Result: ${currentBuild.currentResult}"
-            echo "Backend package : ${env.BACKEND_ARTIFACT_URL ?: '(not published)'}"
-            echo "Frontend package: ${env.FRONTEND_ARTIFACT_URL ?: '(not published)'}"
+            echo "📦 Artifact: ${env.ARTIFACT_URL ?: '(not published)'}"
+            echo "🚀 Website berhasil dideploy."
         }
 
         failure {
             echo "=========================================="
-            echo "       PIPELINE FAILED"
+            echo "       ❌ PIPELINE FAILED"
             echo "=========================================="
-            echo "Periksa log stage yang merah / Console Output / Test Result."
+            echo "Result: ${currentBuild.currentResult}"
+            echo "Periksa log stage yang merah / Console Output untuk penyebab gagal."
         }
 
         unstable {
-            echo "PIPELINE UNSTABLE: ${currentBuild.currentResult}"
+            echo "=========================================="
+            echo "       ⚠️ PIPELINE UNSTABLE"
+            echo "=========================================="
+            echo "Result: ${currentBuild.currentResult}"
         }
-    }
-}
-
-// ====================================================================
-// HELPER: request redeploy lalu polling progres (sama dengan proyek contoh)
-// Dipanggil dari stage 'Deploy Application' (agent curl).
-// ====================================================================
-def deployZip(String label, String websiteId, String artifactUrl) {
-
-    echo "=========================================="
-    echo "   START DEPLOYMENT: ${label}"
-    echo "=========================================="
-    echo "Website ID  : ${websiteId}"
-    echo "Artifact URL: ${artifactUrl}"
-
-    // 1. REQUEST REDEPLOYMENT
-    writeJSON file: 'deploy-request.json', json: [
-        token_access: env.DEPLOY_TOKEN,
-        website_id  : websiteId,
-        source_url  : artifactUrl,
-        source_type : 'jenkins'
-    ]
-
-    def redeployResponse = sh(
-        script: '''
-            set -e
-            curl -sS --fail-with-body \\
-                -X POST "$URL_REDEPLOY" \\
-                -H "Content-Type: application/json" \\
-                -d @deploy-request.json
-        ''',
-        returnStdout: true
-    ).trim()
-
-    sh 'rm -f deploy-request.json'
-
-    echo "Redeploy Response (${label}):"
-    echo redeployResponse
-
-    // 2. POLLING DEPLOYMENT PROGRESS
-    writeJSON file: 'deploy-progress.json', json: [
-        token_access: env.DEPLOY_TOKEN,
-        website_id  : websiteId
-    ]
-
-    def maxAttempts = 120
-    def attempt = 0
-    def deploymentStatus = 'IN_PROGRESS'
-
-    try {
-        while (deploymentStatus == 'IN_PROGRESS') {
-
-            attempt++
-
-            if (attempt > maxAttempts) {
-                error("Deployment ${label} timeout. Status masih IN_PROGRESS setelah ${maxAttempts} percobaan.")
-            }
-
-            sleep time: 5, unit: 'SECONDS'
-
-            echo "=== Checking ${label} Progress (${attempt}/${maxAttempts}) ==="
-
-            def progressResponse = sh(
-                script: '''
-                    set -e
-                    curl -sS --fail-with-body \\
-                        -X POST "$URL_PROGRESS" \\
-                        -H "Content-Type: application/json" \\
-                        -d @deploy-progress.json
-                ''',
-                returnStdout: true
-            ).trim()
-
-            echo "Progress Response:"
-            echo progressResponse
-
-            def json = readJSON text: progressResponse
-
-            deploymentStatus = json?.data?.status?.toString()?.toUpperCase()
-
-            if (!deploymentStatus) {
-                error('Response progress tidak memiliki data.status')
-            }
-
-            echo "Deployment Status (${label}): ${deploymentStatus}"
-
-            if (deploymentStatus == 'SUCCESS') {
-                echo "DEPLOYMENT ${label} SUCCESS"
-                break
-            }
-
-            if (deploymentStatus == 'FAIL') {
-                def deploymentLog = json?.data?.log ?: 'Deployment failed tanpa log.'
-                echo "========== DEPLOYMENT LOG (${label}) =========="
-                echo deploymentLog
-                echo "=============================================="
-                error("Deployment ${label} gagal untuk website ${websiteId}")
-            }
-
-            echo "Deployment ${label} masih berjalan..."
-        }
-    } finally {
-        sh 'rm -f deploy-progress.json'
     }
 }
