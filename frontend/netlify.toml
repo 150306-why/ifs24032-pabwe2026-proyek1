@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback agar route Vue Router tidak 404 saat halaman dibuka/di-refresh langsung
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

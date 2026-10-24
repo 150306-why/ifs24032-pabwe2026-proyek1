@@ -16,7 +16,7 @@ Persiapan sebelum merekam: hapus folder `toba-tix` lokal, siapkan dua terminal k
 | 6:00 | Admin: logout, login admin | Kelola jadwal (tambah satu jadwal), tunjukkan menu rute/kapal/pelabuhan. |
 | 6:45 | Admin: Check-in | Masukkan kode tiket: ditolak jika bukan hari keberangkatan (jelaskan aturan). |
 | 7:15 | `npm test` backend (dan frontend) | Tunjukkan semua test lulus, sebut kasus kursi habis dan cancel. |
-| 7:45 | Jenkins (tangkapan layar atau layar langsung) dan URL online | Tunjukkan build hijau dan aplikasi online terbuka. |
+| 7:45 | Jenkins (layar langsung) dan URL online | Tunjukkan stage hijau (test, Trivy, SonarQube, deploy) dan aplikasi online terbuka. |
 | 8:00 | Penutup | Ringkas fitur dan tautan di deskripsi video. |
 
 Isi deskripsi YouTube: URL repo, URL aplikasi online, daftar langkah dan waktu (chapter).

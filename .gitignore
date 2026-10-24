@@ -7,3 +7,8 @@ backend/data/
 dist/
 coverage/
 junit.xml
+*.zip
+.trivy-cache/
+trivy-results.sarif
+.scannerwork/
+.env.production

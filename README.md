@@ -20,7 +20,7 @@ Aplikasi pemesanan tiket kapal penyeberangan dan wisata di Danau Toba. Proyek 1 
 | Backend | Node.js 20+, Express, better-sqlite3 (SQLite), zod, JWT, bcryptjs, helmet, express-rate-limit |
 | Frontend | Vue 3 (Vite), Vue Router, Pinia, Axios, Tailwind CSS, qrcode |
 | Test | Jest + Supertest (backend), Vitest + Vue Test Utils (frontend), ESLint |
-| CI/CD | Jenkins (`Jenkinsfile`), Docker, docker-compose |
+| CI/CD | Jenkins (`Jenkinsfile`): lint, test + coverage, Trivy, SonarQube, paket ZIP, deploy via API |
 
 ## ERD
 
@@ -103,42 +103,59 @@ npm run dev                 # buka http://localhost:5173
 
 **Akun demo:** `admin@tobatix.test` dan `customer@tobatix.test`; password adalah nilai `SEED_ADMIN_PASSWORD` dan `SEED_CUSTOMER_PASSWORD` yang Anda isi di `backend/.env`.
 
-**Alternatif Docker:** isi `backend/.env`, lalu `docker compose up --build`; frontend di http://localhost:8080.
+> **Bun (opsional):** `bun install` bisa menggantikan `npm install` di backend dan frontend. `better-sqlite3` sudah didaftarkan di `trustedDependencies` agar binary native-nya terpasang. Script tetap berjalan di Node.
 
 ## Menjalankan test dan lint
 
 ```bash
 cd backend  && npm test && npm run lint
 cd frontend && npm test && npm run lint
+# dengan coverage (dipakai Jenkins): npm run test:ci
 ```
 
 Test backend memakai SQLite in-memory (`DB_PATH=:memory:`) sehingga tidak menyentuh data asli.
 
-## Jenkins
+## Jenkins (CI/CD)
 
-1. Pasang plugin NodeJS, JUnit, Pipeline; tambahkan instalasi NodeJS bernama `node-20` (atau ubah nama di `Jenkinsfile`).
-2. Buat job **Pipeline** dengan "Pipeline script from SCM" yang menunjuk repo ini.
-3. Jalankan **Build with Parameters**. Stage: Checkout, Install, Lint, Test, Build Frontend, Archive, Deploy (opsional).
-4. Hasil test tampil di halaman build ("Test Result") dan stage view; artefak `frontend/dist` tersimpan. Ambil tangkapan layar untuk laporan.
-5. Deploy otomatis (opsional): buat credential *Secret text* `BACKEND_DEPLOY_HOOK` dan `FRONTEND_DEPLOY_HOOK` berisi URL deploy hook platform Anda, lalu centang `DEPLOY`.
+Pipeline ada di `Jenkinsfile` dan mengikuti pola proyek contoh `ifs24032-pabwe2026-sk-p5-vue`: build dan uji, lalu **paket ZIP** dipublikasikan ke Jenkins dan dideploy lewat API platform.
 
-## Deploy online (panduan umum)
+| Stage | Isi |
+|---|---|
+| Checkout, Validate Parameters | Ambil kode; gagal cepat bila `VITE_API_URL` masih localhost atau ID website kosong |
+| Install Dependencies, Lint | `bun install` (image `oven/bun:alpine`) dan ESLint untuk backend dan frontend; test/lint/build tetap berjalan di Node 22 |
+| Test Backend / Test Frontend | Jest + Supertest dan Vitest, dengan coverage; hasil tampil di **Test Result** Jenkins |
+| Build Frontend | `npm run build` dengan `VITE_API_URL` dari parameter |
+| Trivy Security Scan | Pindai kerentanan HIGH/CRITICAL (hasil SARIF jadi artefak) |
+| SonarQube Analysis, Quality Gate | Analisis kode + coverage; build berhenti bila quality gate gagal |
+| Package Application | Membuat `backend-app.zip` dan `frontend-app.zip` (tanpa `node_modules`, `.env`, database) |
+| Publish Application | Arsipkan ZIP dan salin ke `userContent` Jenkins sehingga punya URL unduhan |
+| Deploy Application | Request redeploy ke platform dengan URL ZIP, lalu polling sampai `SUCCESS`/`FAIL` (backend dulu, lalu frontend) |
 
-Bagian bertanda **[VERIFIKASI]** harus dicek di dokumentasi platform yang Anda pilih; nama menu dan batas layanan bisa berubah.
+**Menyiapkan Jenkins**
 
-1. **Backend** di platform hosting Node.js. Root directory `backend`, build `npm install`, start `npm start`. Isi environment variable:
-   `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `DB_PATH`, `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. Variabel `PORT` biasanya disediakan platform **[VERIFIKASI]**.
-2. **Penyimpanan SQLite.** SQLite adalah file. Jika filesystem platform bersifat sementara, data (akun baru, booking) **hilang saat restart/redeploy**. Aplikasi otomatis melakukan seed ulang saat start jika DB kosong, sehingga data contoh dan akun demo selalu ada, tetapi data baru tidak bertahan. Untuk data persisten, arahkan `DB_PATH` ke volume/disk persisten jika platform menyediakannya **[VERIFIKASI]** (misalnya `/data/tobatix.db`).
-3. **Frontend** di hosting static. Root `frontend`, build `npm run build`, output `dist`. Isi `VITE_API_URL=https://<url-backend>/api` sebelum build (nilai ditanam saat build). Aktifkan fallback SPA (semua path ke `index.html`) **[VERIFIKASI cara di platform]**.
-4. Setelah URL frontend diketahui, set `CORS_ORIGIN` backend ke URL tersebut lalu redeploy backend.
-5. Uji: buka `<url-backend>/api/health`, lalu buka frontend dan coba login, cari jadwal, booking.
+1. Plugin: Pipeline, Docker Pipeline, JUnit, Warnings Next Generation (SARIF), SonarQube Scanner, Pipeline Utility Steps (`readJSON`/`writeJSON`).
+2. Konfigurasi server SonarQube bernama `SonarQube` (Manage Jenkins > System) dan webhook ke Jenkins untuk Quality Gate. Jenkins dan SonarQube berada di jaringan Docker `cicd-network`.
+3. Environment variable global (Manage Jenkins > System > Global properties): `URL_REDEPLOY`, `URL_PROGRESS`, `DEPLOY_TOKEN`, `WEBSITE_ID_BACKEND`, `WEBSITE_ID_FRONTEND`.
+4. Buat job **Pipeline** dengan "Pipeline script from SCM" yang menunjuk repo ini, lalu **Build with Parameters**.
+5. Ambil tangkapan layar Stage View, Test Result, dan hasil Quality Gate untuk laporan.
+
+**Urutan deploy pertama kali:** (a) jalankan build dengan `DEPLOY_FRONTEND` dimatikan untuk mendeploy backend, (b) catat URL backend online, (c) jalankan lagi dengan `VITE_API_URL=https://<url-backend>/api` untuk mendeploy frontend, (d) set `CORS_ORIGIN` backend ke URL frontend.
+
+## Deploy online
+
+Platform menerima ZIP dari Jenkins dan membangun aplikasinya. Pengaturan per aplikasi:
+
+1. **Backend** (`backend-app.zip`, Node.js): build `npm install`, start `npm start`. Environment variable di platform (tidak ikut ZIP): `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `DB_PATH`, `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. `PORT` biasanya disediakan platform.
+2. **Penyimpanan SQLite.** SQLite adalah file. Jika filesystem platform sementara, data baru (akun, booking) hilang saat restart/redeploy. Aplikasi otomatis seed ulang saat start bila DB kosong sehingga data contoh dan akun demo selalu ada. Untuk data persisten, arahkan `DB_PATH` ke disk persisten bila tersedia.
+3. **Frontend** (`frontend-app.zip`, statis): build `npm run build`, output `dist`. `VITE_API_URL` sudah ditanam lewat `.env.production` saat paket dibuat. Fallback SPA diatur di `frontend/netlify.toml`.
+4. Uji: buka `<url-backend>/api/health`, lalu buka frontend dan coba login, cari jadwal, booking.
 
 ## Keputusan desain
 
 - Token JWT disimpan di `sessionStorage` (hilang saat tab ditutup, tidak ada `v-html` untuk data pengguna). Cookie httpOnly lebih tahan XSS tetapi butuh perlindungan CSRF dan konfigurasi lintas domain, jadi tidak dipakai di proyek ini.
 - Waktu keberangkatan disimpan sebagai ISO UTC; tampilan dan filter tanggal memakai WIB (UTC+7).
 - Pembatalan booking berstatus `paid` tidak memodelkan pengembalian dana (di luar lingkup).
-- `bcryptjs` dipakai agar tidak perlu kompilasi native di Jenkins/Docker.
+- `bcryptjs` dipakai agar tidak perlu kompilasi native untuk hashing password di Jenkins.
 
 ## Struktur
 
@@ -146,5 +163,5 @@ Bagian bertanda **[VERIFIKASI]** harus dicek di dokumentasi platform yang Anda p
 backend/   Express API (modules/{auth,ports,boats,routes,schedules,bookings,tickets})
 frontend/  Vue 3 + Vite
 docs/      Draft dokumen proyek dan skrip video demo
-Jenkinsfile, docker-compose.yml
+Jenkinsfile, sonar-project.properties
 ```

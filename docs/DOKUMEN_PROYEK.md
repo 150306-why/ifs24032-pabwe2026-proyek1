@@ -46,7 +46,7 @@ Danau Toba adalah tujuan wisata utama di Sumatera Utara dengan penyeberangan rut
 | NFR-02 | Integritas data: transaksi database dan constraint (foreign key, CHECK, UNIQUE) |
 | NFR-03 | Responsif (mobile-first) dan aksesibel (label, fokus, kontras) |
 | NFR-04 | Dapat diuji: test otomatis backend dan frontend |
-| NFR-05 | Dapat dijalankan ulang dari `git clone` dengan README; dapat di-deploy via Jenkins |
+| NFR-05 | Dapat dijalankan ulang dari `git clone` dengan README; dapat di-deploy via Jenkins (paket ZIP + API deploy) |
 | NFR-06 | Error 500 tidak membocorkan detail internal |
 
 ## 5. Use Case
@@ -98,7 +98,7 @@ Frontend Vue 3 (SPA) memanggil API Express lewat Axios. Backend berlapis: route,
 
 ## 9. Pengujian
 
-Backend (Jest + Supertest, DB in-memory): register/login, filter jadwal, booking sukses, kursi habis dan batas kapasitas, permintaan bersamaan, cancel mengembalikan kuota, kadaluarsa 15 menit, check-in dua kali ditolak, akses tanpa token/role salah. Frontend (Vitest): format, form penumpang, store auth, komponen. Pipeline Jenkins menjalankan lint, test, dan build.
+Backend (Jest + Supertest, DB in-memory): register/login, filter jadwal, booking sukses, kursi habis dan batas kapasitas, permintaan bersamaan, cancel mengembalikan kuota, kadaluarsa 15 menit, check-in dua kali ditolak, akses tanpa token/role salah. Frontend (Vitest): format, form penumpang, store auth, komponen. Pipeline Jenkins menjalankan lint, test dengan coverage, build frontend, Trivy, SonarQube (quality gate), lalu membuat paket ZIP dan mendeploynya.
 
 ## 10. Tangkapan Layar yang Perlu Diambil
 
@@ -110,11 +110,21 @@ Backend (Jest + Supertest, DB in-memory): register/login, filter jadwal, booking
 - [ ] Login dan Register (termasuk pesan validasi)
 - [ ] Admin: kelola jadwal, rute, kapal, pelabuhan
 - [ ] Admin: check-in (sukses dan ditolak)
-- [ ] Jenkins: stage view hijau, Test Result, artefak
+- [ ] Jenkins: stage view hijau, Test Result, Trivy, SonarQube Quality Gate, artefak ZIP, log Deploy `SUCCESS`
 - [ ] Output `npm test` backend dan frontend
 - [ ] URL aplikasi online (halaman terbuka di browser)
 - [ ] Repository GitHub
 
 ## 11. Pengumpulan
 
-Repo GitHub: `<isi>` · URL online: `<isi>` · Video YouTube: `<isi>` · Hasil Jenkins: `<isi tangkapan layar / URL>`
+Checklist artefak sesuai Panduan Proyek 1 (**batas akhir: sebelum 24 Oktober 2026**):
+
+| # | Artefak | Status | Isi / tautan |
+|---|---|---|---|
+| 1 | Dokumen Proyek 1 (sesuai template) | [ ] | pindahkan draft ini ke template dosen |
+| 2 | Repository GitHub | [ ] | `<isi>` |
+| 3 | Hasil pengujian deployment Jenkins | [ ] | `<tangkapan layar / URL build>` |
+| 4 | URL aplikasi online | [ ] | frontend `<isi>`, API `<isi>/api/health` |
+| 5 | URL video YouTube (mulai dari `git clone`) | [ ] | `<isi>` |
+
+Kesesuaian teknologi: back-end Express.js + SQLite yang menyediakan data sendiri (API); front-end Vue (Modul praktikum 5). Topik (tiket kapal Danau Toba) harus dicatat di spreadsheet topik dan berbeda dengan teman sekelas.

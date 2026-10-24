@@ -10,7 +10,8 @@
     "db:init": "node src/db/init.js",
     "db:seed": "node src/db/seed.js",
     "lint": "eslint .",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:ci": "jest --runInBand --coverage"
   },
   "engines": {
     "node": ">=20"
@@ -50,6 +51,16 @@
         }
       ]
     ],
-    "testTimeout": 20000
-  }
+    "testTimeout": 20000,
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coverageReporters": [
+      "text-summary",
+      "lcov"
+    ]
+  },
+  "trustedDependencies": [
+    "better-sqlite3"
+  ]
 }
