@@ -206,9 +206,12 @@ describe('tickets.service', () => {
   });
 
   it('checkIn: bukan hari keberangkatan -> 422', () => {
-    const { code } = paidTicket();
+    const { code, departure } = paidTicket();
+    // Jangan pakai new Date(): jadwal seed dibuat relatif terhadap jam saat test jalan,
+    // sehingga pada jam tertentu (zona WIB) keberangkatan terpajang di "hari ini" dan test jadi flaky.
+    const otherDay = new Date(departure.getTime() + 3 * 24 * 60 * 60 * 1000);
     expectHttpError(
-      () => tickets.checkIn(db, code, new Date()),
+      () => tickets.checkIn(db, code, otherDay),
       422,
       'Check-in hanya bisa dilakukan pada hari keberangkatan',
     );
@@ -248,10 +251,13 @@ describe('schedules.service', () => {
   });
 
   it('list: publik menyembunyikan jadwal lampau dan tertutup, admin melihat semuanya', () => {
+    // Ambil jadwal seed SEBELUM menyisipkan jadwal lampau: scheduleOf() mengurutkan
+    // berdasarkan departure_at, sehingga setelah insert 2020 ia akan mengembalikan jadwal lampau itu.
+    const upcoming = scheduleOf();
     db.prepare(
       "INSERT INTO schedules (route_id, boat_id, departure_at, capacity) VALUES (1, 1, '2020-01-01T00:00:00.000Z', 5)",
     ).run();
-    db.prepare("UPDATE schedules SET status = 'closed' WHERE id = ?").run(scheduleOf().id);
+    db.prepare("UPDATE schedules SET status = 'closed' WHERE id = ?").run(upcoming.id);
     expect(schedules.list(db, { page: 1, limit: 100 }).pagination.total).toBe(62);
     expect(schedules.list(db, { page: 1, limit: 100 }, { publicOnly: false }).pagination.total).toBe(64);
   });
