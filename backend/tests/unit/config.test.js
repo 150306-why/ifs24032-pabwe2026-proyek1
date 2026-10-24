@@ -4,6 +4,7 @@ const path = require('path');
 const { createDb } = require('../../src/config/db');
 const { initDb } = require('../../src/db/init');
 const { seedIfEmpty } = require('../../src/db/seed');
+const { collectGarbage } = require('../gc');
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -27,6 +28,8 @@ function loadEnv(overrides = {}) {
   });
   return mod;
 }
+
+afterAll(() => { collectGarbage(); });
 
 afterEach(() => {
   restoreEnv();
@@ -136,6 +139,7 @@ describe('db/seed', () => {
     initDb(db);
   });
   afterEach(() => { db.close(); });
+  afterAll(() => { db = null; });
 
   const count = (table) => db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
 

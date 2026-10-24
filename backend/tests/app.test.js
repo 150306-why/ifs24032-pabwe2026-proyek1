@@ -1,11 +1,11 @@
 const request = require('supertest');
-const { createTestContext, bearer } = require('./helpers');
+const { createTestContext, bearer, releaseContext } = require('./helpers');
 const { env } = require('../src/config/env');
 
 describe('App (infrastruktur HTTP)', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
-  afterAll(() => { ctx.db.close(); });
+  afterAll(() => { releaseContext(ctx); });
 
   it('GET /api/health -> ok', async () => {
     const res = await request(ctx.app).get('/api/health');
@@ -51,7 +51,7 @@ describe('App (infrastruktur HTTP)', () => {
 describe('Auth (kasus tambahan)', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
-  afterAll(() => { ctx.db.close(); });
+  afterAll(() => { releaseContext(ctx); });
 
   it('login email tidak terdaftar -> 401 dengan pesan generik', async () => {
     const res = await request(ctx.app).post('/api/auth/login').send({ email: 'tidak@ada.com', password: 'password123' });

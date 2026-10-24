@@ -1,4 +1,5 @@
 const { createDb } = require('../../src/config/db');
+const { collectGarbage } = require('../gc');
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -26,6 +27,11 @@ describe('server.js', () => {
       if (!(key in ORIGINAL_ENV)) delete process.env[key];
     });
     Object.assign(process.env, ORIGINAL_ENV);
+  });
+
+  afterAll(() => {
+    testDb = null;
+    collectGarbage();
   });
 
   /** Memuat server.js dengan app.listen dan createDb dipalsukan (tidak membuka port sungguhan). */

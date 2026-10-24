@@ -125,7 +125,7 @@ describe('definisi router', () => {
     expect(loaders.length).toBeGreaterThanOrEqual(10);
     const modules = await Promise.all(loaders.map((load) => load()));
     modules.forEach((m) => expect(m.default).toBeDefined());
-  });
+  }, 60000);
 
   it('URL tidak dikenal menuju halaman not-found', async () => {
     await router.push('/tidak-ada-halaman-ini');

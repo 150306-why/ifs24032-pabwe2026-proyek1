@@ -1,11 +1,11 @@
 const request = require('supertest');
-const { createTestContext, bearer, createSchedule, book, adults } = require('./helpers');
+const { createTestContext, bearer, createSchedule, book, adults, releaseContext } = require('./helpers');
 
 describe('Booking', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
   // Tutup DB agar prepared statement dilepas sebelum Jest membongkar environment (cegah crash native better-sqlite3).
-  afterAll(() => { ctx.db.close(); });
+  afterAll(() => { releaseContext(ctx); });
 
   it('booking sukses: harga dihitung server, mengabaikan harga dari klien', async () => {
     const schedule = await createSchedule(ctx, { capacity: 10 });

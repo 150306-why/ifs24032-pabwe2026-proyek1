@@ -5,6 +5,7 @@ const bookings = require('../../src/modules/bookings/bookings.service');
 const tickets = require('../../src/modules/tickets/tickets.service');
 const schedules = require('../../src/modules/schedules/schedules.service');
 const { expectHttpError } = require('../mocks');
+const { collectGarbage } = require('../gc');
 
 const admin = { id: 1, role: 'admin' };
 const customer = { id: 2, role: 'customer' };
@@ -18,6 +19,10 @@ beforeEach(() => {
   seedIfEmpty(db); // user 1 = admin, user 2 = customer; rute 1 = Ajibata -> Tomok (dewasa 20000, anak 12000)
 });
 afterEach(() => { db.close(); });
+afterAll(() => {
+  db = null;
+  collectGarbage();
+});
 
 const scheduleOf = (routeId = 1) => db
   .prepare('SELECT * FROM schedules WHERE route_id = ? ORDER BY departure_at LIMIT 1')

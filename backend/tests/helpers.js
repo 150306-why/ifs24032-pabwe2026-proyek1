@@ -3,6 +3,7 @@ const { createDb } = require('../src/config/db');
 const { initDb } = require('../src/db/init');
 const { seedIfEmpty } = require('../src/db/seed');
 const { createApp } = require('../src/app');
+const { collectGarbage } = require('./gc');
 
 const HOUR = 60 * 60 * 1000;
 
@@ -20,6 +21,14 @@ async function createTestContext() {
   const adminToken = await login(process.env.SEED_ADMIN_EMAIL, process.env.SEED_ADMIN_PASSWORD);
   const customerToken = await login(process.env.SEED_CUSTOMER_EMAIL, process.env.SEED_CUSTOMER_PASSWORD);
   return { app, db, adminToken, customerToken };
+}
+
+/** Menutup DB, memutus referensi, dan memaksa GC sebelum environment Jest dibongkar. */
+function releaseContext(ctx) {
+  ctx.db.close();
+  ctx.db = null;
+  ctx.app = null;
+  collectGarbage();
 }
 
 const bearer = (token) => ({ Authorization: `Bearer ${token}` });
@@ -40,4 +49,4 @@ const book = (ctx, token, scheduleId, passengers) => request(ctx.app)
 
 const adults = (n) => Array.from({ length: n }, (_, i) => ({ name: `Penumpang ${i + 1}`, category: 'dewasa' }));
 
-module.exports = { createTestContext, bearer, createSchedule, book, adults, HOUR };
+module.exports = { createTestContext, releaseContext, bearer, createSchedule, book, adults, HOUR };

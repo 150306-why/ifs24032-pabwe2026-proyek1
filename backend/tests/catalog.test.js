@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { createTestContext, bearer, createSchedule, book, adults } = require('./helpers');
+const { createTestContext, bearer, createSchedule, book, adults, releaseContext } = require('./helpers');
 
 describe('API katalog (pelabuhan, kapal, rute, jadwal)', () => {
   let ctx;
@@ -7,7 +7,7 @@ describe('API katalog (pelabuhan, kapal, rute, jadwal)', () => {
   const asCustomer = (req) => req.set(bearer(ctx.customerToken));
 
   beforeAll(async () => { ctx = await createTestContext(); });
-  afterAll(() => { ctx.db.close(); });
+  afterAll(() => { releaseContext(ctx); });
 
   describe('pelabuhan', () => {
     it('GET /api/ports publik, terurut berdasarkan nama', async () => {
