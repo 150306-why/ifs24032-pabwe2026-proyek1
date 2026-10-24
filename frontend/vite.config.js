@@ -12,7 +12,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.{js,vue}'],
-      exclude: ['src/**/*.test.js', 'src/main.js'],
+      exclude: ['src/**/*.test.js', 'src/test/**'],
     },
   },
 });

@@ -4,6 +4,8 @@ const { createTestContext, bearer } = require('./helpers');
 describe('Jadwal dan otorisasi admin', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
+  // Tutup DB agar prepared statement dilepas sebelum Jest membongkar environment (cegah crash native better-sqlite3).
+  afterAll(() => { ctx.db.close(); });
 
   it('daftar publik hanya jadwal open di masa depan, ada sisa kursi dan tarif', async () => {
     const res = await request(ctx.app).get('/api/schedules?limit=50');

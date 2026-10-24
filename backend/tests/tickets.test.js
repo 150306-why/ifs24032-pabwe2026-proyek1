@@ -4,6 +4,8 @@ const { createTestContext, bearer, createSchedule, book, adults, HOUR } = requir
 describe('Tiket dan check-in', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
+  // Tutup DB agar prepared statement dilepas sebelum Jest membongkar environment (cegah crash native better-sqlite3).
+  afterAll(() => { ctx.db.close(); });
 
   async function paidTicket(inMs) {
     const schedule = await createSchedule(ctx, { capacity: 5, inMs });

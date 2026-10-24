@@ -4,6 +4,8 @@ const { createTestContext, bearer } = require('./helpers');
 describe('Auth', () => {
   let ctx;
   beforeAll(async () => { ctx = await createTestContext(); });
+  // Tutup DB agar prepared statement dilepas sebelum Jest membongkar environment (cegah crash native better-sqlite3).
+  afterAll(() => { ctx.db.close(); });
 
   it('register berhasil dan role selalu customer', async () => {
     const res = await request(ctx.app)

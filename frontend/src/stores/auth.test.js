@@ -21,9 +21,20 @@ describe('auth store', () => {
     authApi.login.mockResolvedValue({ token: 'abc', user: { id: 1, role: 'customer' } });
     const auth = useAuthStore();
     await auth.login({ email: 'a@b.c', password: 'x' });
+    expect(authApi.login).toHaveBeenCalledWith({ email: 'a@b.c', password: 'x' });
     expect(auth.isAuthenticated).toBe(true);
     expect(auth.isAdmin).toBe(false);
     expect(sessionStorage.getItem('tobatix_token')).toBe('abc');
+  });
+
+  it('register menyimpan sesi seperti login', async () => {
+    authApi.register.mockResolvedValue({ token: 'reg', user: { id: 3, role: 'customer', name: 'Baru' } });
+    const auth = useAuthStore();
+    await auth.register({ name: 'Baru' });
+    expect(authApi.register).toHaveBeenCalledWith({ name: 'Baru' });
+    expect(auth.token).toBe('reg');
+    expect(auth.user.name).toBe('Baru');
+    expect(sessionStorage.getItem('tobatix_token')).toBe('reg');
   });
 
   it('isAdmin true untuk role admin', async () => {
@@ -43,6 +54,22 @@ describe('auth store', () => {
     expect(sessionStorage.getItem('tobatix_token')).toBeNull();
   });
 
+  it('state awal membaca token dari sessionStorage', () => {
+    sessionStorage.setItem('tobatix_token', 'tersimpan');
+    setActivePinia(createPinia());
+    const auth = useAuthStore();
+    expect(auth.token).toBe('tersimpan');
+    expect(auth.user).toBeNull();
+    expect(auth.isAuthenticated).toBe(true);
+  });
+
+  it('fetchMe sukses mengisi user', async () => {
+    authApi.fetchMe.mockResolvedValue({ id: 9, name: 'Budi', role: 'customer' });
+    const auth = useAuthStore();
+    await auth.fetchMe();
+    expect(auth.user).toEqual({ id: 9, name: 'Budi', role: 'customer' });
+  });
+
   it('fetchMe gagal (token tidak valid) -> logout otomatis', async () => {
     sessionStorage.setItem('tobatix_token', 'basi');
     setActivePinia(createPinia());
@@ -50,5 +77,6 @@ describe('auth store', () => {
     const auth = useAuthStore();
     await auth.fetchMe();
     expect(auth.isAuthenticated).toBe(false);
+    expect(sessionStorage.getItem('tobatix_token')).toBeNull();
   });
 });
