@@ -1,14 +1,44 @@
-node_modules/
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+backend
+*.tgz
+*.zip
+
+# code coverage
+coverage
+*.lcov
+junit.xml
+
+# logs
+logs
+*.log
+
+# dotenv environment variable files
 .env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# database
 *.db
 *.db-shm
 *.db-wal
-backend/data/
-dist/
-coverage/
-junit.xml
-*.zip
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
 .trivy-cache/
 trivy-results.sarif
 .scannerwork/
-.env.production
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store

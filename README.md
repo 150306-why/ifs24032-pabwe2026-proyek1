@@ -99,10 +99,9 @@ npm run db:seed             # membuat database + data contoh
 npm run dev                 # API di http://localhost:3000/api (cek /api/health)
 ```
 
-**Frontend** (terminal baru)
+**Frontend** (terminal baru, di root repo)
 
 ```bash
-cd frontend
 npm install
 cp .env.example .env        # VITE_API_URL=http://localhost:3000/api
 npm run dev                 # buka http://localhost:5173
@@ -115,8 +114,8 @@ npm run dev                 # buka http://localhost:5173
 ## Menjalankan test dan lint
 
 ```bash
-cd backend  && npm test && npm run lint
-cd frontend && npm test && npm run lint
+cd backend && npm test && npm run lint   # backend
+npm test && npm run lint                  # frontend (root repo)
 # dengan coverage (dipakai Jenkins): npm run test:ci
 ```
 
@@ -128,8 +127,8 @@ Test backend memakai SQLite in-memory (`DB_PATH=:memory:`) sehingga tidak menyen
 |---|---|---|
 | Backend, alur API | `backend/test/*.test.js` | auth, katalog (pelabuhan/kapal/rute/jadwal admin), booking, tiket, infrastruktur HTTP |
 | Backend, unit | `backend/test/unit/*.test.js` | utils, middleware, skema zod, config/db/init/seed, `server.js`, service (booking, tiket, jadwal) |
-| Frontend | `frontend/src/**/*.test.js` di samping file yang diuji | api, state (store), hook, helper, komponen, page, router, `App.vue`, `main.js` |
-| Helper uji frontend | `frontend/src/test-utils.js` (setup global di `frontend/src/setupTests.js`) | router uji, mount dengan Pinia, data contoh |
+| Frontend | `src/**/*.test.js` di samping file yang diuji | api, state (store), hook, helper, komponen, page, router, `App.vue`, `main.js` |
+| Helper uji frontend | `src/test/helpers.js` (setup global di `src/test/setup.js`) | router uji, mount dengan Pinia, data contoh |
 
 Bagian `if (require.main === module)` pada `db/init.js` dan `db/seed.js` hanya berjalan lewat CLI (`npm run db:init`/`db:seed`) sehingga tidak terhitung di coverage.
 
@@ -165,13 +164,13 @@ Platform menerima ZIP dari Jenkins dan membangun aplikasinya. Pengaturan per apl
 
 1. **Backend** (`backend-app.zip`, Node.js): build `npm install`, start `npm start`. Environment variable di platform (tidak ikut ZIP): `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `DB_PATH`, `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. `PORT` biasanya disediakan platform.
 2. **Penyimpanan SQLite.** SQLite adalah file. Jika filesystem platform sementara, data baru (akun, booking) hilang saat restart/redeploy. Aplikasi otomatis seed ulang saat start bila DB kosong sehingga data contoh dan akun demo selalu ada. Untuk data persisten, arahkan `DB_PATH` ke disk persisten bila tersedia.
-3. **Frontend** (`frontend-app.zip`, statis): build `npm run build`, output `dist`. `VITE_API_URL` sudah ditanam lewat `.env.production` saat paket dibuat. Fallback SPA diatur di `frontend/netlify.toml`.
+3. **Frontend** (`frontend-app.zip`, statis): build `npm run build`, output `dist`. `VITE_API_URL` sudah ditanam lewat `.env.production` saat paket dibuat. Fallback SPA diatur di `vercel.json`.
 4. Uji: buka `<url-backend>/api/health`, lalu buka frontend dan coba login, cari jadwal, booking.
 
 ### Alternatif: Vercel (dua project)
 
 - **Backend:** buat project Vercel dengan Root Directory `backend`, Application Preset **Other**. Entry serverless ada di `backend/api/index.js` dan `backend/vercel.json`. Environment variable: `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. DB SQLite ditulis ke `/tmp` (sementara), jadi akun dan booking baru bisa hilang saat instance baru dibuat.
-- **Frontend:** project Vercel dengan Root Directory `frontend`, preset Vite, `VITE_API_URL=https://<backend>.vercel.app/api`. Fallback SPA ada di `frontend/vercel.json`.
+- **Frontend:** project Vercel dengan Root Directory `.` (root repo), preset Vite, `VITE_API_URL=https://<backend>.vercel.app/api`. Fallback SPA ada di `vercel.json`.
 
 ## Keputusan desain
 
@@ -182,23 +181,33 @@ Platform menerima ZIP dari Jenkins dan membangun aplikasinya. Pengaturan per apl
 
 ## Struktur
 
+Frontend berada di root repo (pola yang sama dengan `ifs24039`); folder `backend/`
+masuk `.gitignore` dan dikelola sebagai repo terpisah, sehingga Jenkins, SonarQube,
+dan Vercel membaca `package.json` langsung dari root.
+
 ```
-backend/                Express API
-  src/                  app.js, server.js, config/, db/, middlewares/, utils/,
-                        modules/{auth,ports,boats,routes,schedules,bookings,tickets}
-  test/                 tes alur API (*.test.js) dan test/unit/
-frontend/               Vue 3 + Vite (berbasis fitur)
+.                       Frontend Vue 3 + Vite (berbasis fitur)
   src/
     features/
       admin/            api/, components/, pages/, adminConfigs.js
-      auth/             api/, pages/, states/
+      auth/             api/, components/, pages/, states/
       bookings/         api/, components/, pages/, states/
-      common/           components/ (AppHeader, Base*, AsyncState), pages/ (Home, NotFound)
+      common/           components/ (AppHeader, Base*, AsyncState), pages/ (Home, NotFound), states/
       schedules/        api/, components/, pages/
+      tickets/          api/, pages/
     helpers/            apiHelper (axios), errorHelper, formatHelper
     hooks/              useAsync, useCountdown, usePassengerForm
-    App.vue, main.js, router.js, index.css, setupTests.js, test-utils.js
-  Tes frontend (*.test.js) diletakkan di samping file yang diuji.
-docs/                   Draft dokumen proyek dan skrip video demo
-Jenkinsfile, sonar-project.properties
+    test/               setup.js, helpers.js (setup & helper uji bersama)
+    App.vue, main.js, router.js, index.css
+  public/               favicon.svg
+  docs/                 Draft dokumen proyek dan skrip video demo
+  index.html, vite.config.js, eslint.config.js, tailwind.config.js, postcss.config.js
+  vercel.json, bunfig.toml, .npmrc, .prettierignore, .env.example, .env.production
+  Jenkinsfile, sonar-project.properties
+backend/                Express API (repo terpisah, di-ignore git)
+  src/                  app.js, server.js, config/, db/, middlewares/, utils/,
+                        modules/{auth,ports,boats,routes,schedules,bookings,tickets}
+  test/                 tes alur API (*.test.js) dan test/unit/
 ```
+
+Tes frontend (`*.test.js`) diletakkan di samping file yang diuji.

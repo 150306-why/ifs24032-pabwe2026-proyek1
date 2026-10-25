@@ -5,7 +5,7 @@ Persiapan sebelum merekam: hapus folder `toba-tix` lokal, siapkan dua terminal k
 | Menit | Langkah | Yang diucapkan / ditunjukkan |
 |---|---|---|
 | 0:00 | Pembukaan | Nama, NIM, judul "Toba Tix", tujuan aplikasi. |
-| 0:30 | `git clone <URL-REPO>` lalu `cd toba-tix` | Tunjukkan struktur folder: backend, frontend, Jenkinsfile, README. |
+| 0:30 | `git clone <URL-REPO>` lalu `cd toba-tix` | Tunjukkan struktur folder: src, public, docs, Jenkinsfile, README (frontend di root). |
 | 1:00 | Backend: `cd backend`, `npm install`, `cp .env.example .env` | Buka `.env`, isi JWT_SECRET dan password seed (sensor password di layar). |
 | 2:00 | `npm run db:seed`, `npm run dev` | Tunjukkan pesan server hidup; buka `http://localhost:3000/api/health` di browser. |
 | 2:45 | Terminal baru: `cd frontend`, `npm install`, `cp .env.example .env`, `npm run dev` | Buka `http://localhost:5173`. |
