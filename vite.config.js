@@ -8,6 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    exclude: ['node_modules/**', 'dist/**', 'backend/**'],
     setupFiles: ['./src/setupTests.js'],
     testTimeout: 20000,
     coverage: {
