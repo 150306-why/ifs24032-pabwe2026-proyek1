@@ -141,7 +141,7 @@ Pipeline ada di `Jenkinsfile` (satu aplikasi, dibaca dari root repo). Alurnya: i
 | Checkout | `checkout scm` di container `oven/bun:alpine` |
 | Install Dependencies | `bun install` |
 | Test | `npx vitest run --coverage` (Node 24); menghasilkan `coverage/lcov.info` |
-| Trivy Security Scan | Pindai kerentanan HIGH/CRITICAL, hasil `trivy-results.sarif` |
+| Trivy Security Scan | Pindai kerentanan HIGH/CRITICAL, hasil `trivy-results.sarif`; folder yang dilewati diatur di `trivy.yaml` |
 | SonarQube Analysis, Quality Gate | `sonar-scanner` memakai `sonar-project.properties`; build berhenti bila quality gate gagal |
 | Package Application | Membuat `latest-app.zip` (tanpa `node_modules`, `.env*`, `coverage`, `dist`) |
 | Publish Application | Arsipkan ZIP dan salin ke `userContent` Jenkins sehingga punya URL unduhan |
@@ -200,7 +200,7 @@ dan Vercel membaca `package.json` langsung dari root.
   public/               favicon.svg
   docs/                 Draft dokumen proyek dan skrip video demo
   index.html, vite.config.js, eslint.config.js, tailwind.config.js, postcss.config.js
-  vercel.json, bunfig.toml, .npmrc, .prettierignore, .env.example, .env.production
+  vercel.json, bunfig.toml, trivy.yaml, .npmrc, .prettierignore, .env.example, .env.production
   Jenkinsfile, sonar-project.properties
 backend/                Express API (repo terpisah, di-ignore git)
   src/                  app.js, server.js, config/, db/, middlewares/, utils/,

@@ -1,0 +1,8 @@
+# Dibaca otomatis oleh `trivy fs .` di Jenkinsfile (file konfigurasi bawaan: trivy.yaml di folder kerja).
+# Backend ada di repo terpisah (…-be); folder ini hanya muncul di workspace lokal, bukan bagian aplikasi frontend.
+scan:
+  skip-dirs:
+    - backend
+    - node_modules
+    - coverage
+    - dist
