@@ -31,8 +31,6 @@ pipeline {
     environment {
         CI = 'true'
         VITE_API_URL = "${params.VITE_API_URL}"
-        WEBSITE_ID_BACKEND = '<id-backend>'
-        WEBSITE_ID_FRONTEND = '<id-frontend>'
     }
 
     stages {
@@ -85,7 +83,15 @@ pipeline {
 
                     echo "=== Install Backend ==="
                     cd backend
+
+                    # Workspace Jenkins dipakai ulang antar build: buang node_modules sisa `bun install`
+                    # yang gagal (better-sqlite3 tanpa binary). Jika tidak dibuang, npm menganggap paket
+                    # sudah terpasang dan tidak menjalankan install script-nya.
+                    rm -rf node_modules
                     npm install --no-audit --no-fund
+
+                    # Gagal cepat dengan pesan jelas jika binary native better-sqlite3 tidak termuat
+                    node -e "const D=require('better-sqlite3'); new D(':memory:').close(); console.log('better-sqlite3 OK')"
                 '''
             }
         }
