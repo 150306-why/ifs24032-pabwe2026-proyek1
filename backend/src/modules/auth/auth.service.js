@@ -53,4 +53,27 @@ function getMe(db, userId) {
   return row;
 }
 
-module.exports = { register, login, getMe };
+/** Mengubah nama profil. */
+function updateProfile(db, userId, { name }) {
+  getMe(db, userId);
+  db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, userId);
+  return getMe(db, userId);
+}
+
+/**
+ * Mengganti password setelah memverifikasi password saat ini.
+ * @throws {HttpError} 422 jika password saat ini salah atau password baru sama dengan lama
+ */
+function changePassword(db, userId, { current_password: current, new_password: next }) {
+  const row = db.prepare('SELECT id, password_hash FROM users WHERE id = ?').get(userId);
+  if (!row) throw HttpError.unauthorized();
+  if (!bcrypt.compareSync(current, row.password_hash)) {
+    throw HttpError.unprocessable('Password saat ini salah', { current_password: 'Password saat ini salah' });
+  }
+  if (current === next) {
+    throw HttpError.unprocessable('Password baru harus berbeda', { new_password: 'Password baru harus berbeda dari yang lama' });
+  }
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(bcrypt.hashSync(next, BCRYPT_ROUNDS), userId);
+}
+
+module.exports = { register, login, getMe, updateProfile, changePassword };

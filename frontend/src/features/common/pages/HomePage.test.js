@@ -6,12 +6,16 @@ vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn(),
   fetchSchedules: vi.fn(),
   fetchSchedule: vi.fn(),
+  fetchRoutes: vi.fn(),
 }));
 
-import { fetchPorts } from '@/features/schedules/api/catalogApi';
+import { fetchPorts, fetchRoutes } from '@/features/schedules/api/catalogApi';
 import HomePage from './HomePage.vue';
 
 const PORTS = [{ id: 1, name: 'Ajibata' }, { id: 2, name: 'Tomok' }];
+const ROUTES = [{
+  id: 1, duration_min: 60, origin: PORTS[0], destination: PORTS[1], fares: { dewasa: 20000, anak: 12000 },
+}];
 
 async function render() {
   const app = await mountWithApp(HomePage);
@@ -23,6 +27,7 @@ describe('HomePage', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     fetchPorts.mockResolvedValue(PORTS);
+    fetchRoutes.mockResolvedValue(ROUTES);
   });
 
   it('memuat pelabuhan ke pilihan asal dan tujuan', async () => {
@@ -68,6 +73,31 @@ describe('HomePage', () => {
     await flushPromises();
     expect(router.currentRoute.value.name).toBe('schedules');
     expect(router.currentRoute.value.query).toEqual({ origin: '1', destination: '2', date: '2030-01-15' });
+  });
+
+  it('menampilkan rute penyeberangan dan membuka jadwalnya saat dipilih', async () => {
+    const { wrapper, router } = await render();
+    expect(wrapper.text()).toContain('Rute penyeberangan');
+    const card = wrapper.findAll('button').find((b) => b.text().includes('Ajibata') && b.text().includes('Tomok'));
+    await card.trigger('click');
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe('schedules');
+    expect(router.currentRoute.value.query).toMatchObject({ origin: '1', destination: '2' });
+  });
+
+  it('tanpa data rute, bagian rute disembunyikan', async () => {
+    fetchRoutes.mockResolvedValue([]);
+    const { wrapper } = await render();
+    expect(wrapper.text()).not.toContain('Rute penyeberangan');
+  });
+
+  it('tombol tukar menukar asal dan tujuan', async () => {
+    const { wrapper } = await render();
+    await wrapper.find('#origin').setValue('1');
+    await wrapper.find('#destination').setValue('2');
+    await wrapper.find('button[aria-label="Tukar asal dan tujuan"]').trigger('click');
+    expect(wrapper.find('#origin').element.value).toBe('2');
+    expect(wrapper.find('#destination').element.value).toBe('1');
   });
 
   it('gagal memuat pelabuhan menampilkan pesan error', async () => {

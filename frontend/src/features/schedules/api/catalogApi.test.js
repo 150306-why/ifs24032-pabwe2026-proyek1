@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/helpers/apiHelper', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }));
 
 import http from '@/helpers/apiHelper';
-import { fetchPorts, fetchSchedule, fetchSchedules } from './catalogApi';
+import {
+  fetchPorts, fetchRoutes, fetchSchedule, fetchSchedules,
+} from './catalogApi';
 
 describe('catalogApi', () => {
   beforeEach(() => {
@@ -14,6 +16,11 @@ describe('catalogApi', () => {
   it('fetchPorts', async () => {
     await expect(fetchPorts()).resolves.toBe('DATA');
     expect(http.get).toHaveBeenCalledWith('/ports');
+  });
+
+  it('fetchRoutes', async () => {
+    await expect(fetchRoutes()).resolves.toBe('DATA');
+    expect(http.get).toHaveBeenCalledWith('/routes');
   });
 
   it('fetchSchedules meneruskan parameter query', async () => {

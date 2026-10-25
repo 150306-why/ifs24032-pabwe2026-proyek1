@@ -12,7 +12,7 @@ const model = defineModel({ type: [String, Number] });
 
 <template>
   <div>
-    <label :for="id" class="mb-1 block text-sm font-medium text-slate-700">{{ label }}</label>
+    <label :for="id" class="mb-1.5 block text-sm font-semibold text-lake-900">{{ label }}</label>
     <select
       :id="id"
       v-model="model"
@@ -24,6 +24,6 @@ const model = defineModel({ type: [String, Number] });
       <option value="" disabled>{{ placeholder }}</option>
       <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
     </select>
-    <p v-if="error" :id="`${id}-error`" role="alert" class="mt-1 text-sm text-red-700">{{ error }}</p>
+    <p v-if="error" :id="`${id}-error`" role="alert" class="mt-1 text-sm font-medium text-ulos-700">{{ error }}</p>
   </div>
 </template>

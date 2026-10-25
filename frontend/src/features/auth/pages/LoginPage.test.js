@@ -74,4 +74,19 @@ describe('LoginPage', () => {
     const { wrapper } = await mountWithApp(LoginPage, { route: '/masuk' });
     expect(wrapper.find('a[href="/daftar"]').exists()).toBe(true);
   });
+
+  it('admin yang masuk lewat halaman pelanggan dialihkan ke panel admin', async () => {
+    authApi.login.mockResolvedValue({ token: 'tok', user: { id: 9, name: 'Admin', role: 'admin' } });
+    const { wrapper, router } = await mountWithApp(LoginPage, { route: '/masuk' });
+    await fillAndSubmit(wrapper, 'admin@tobatix.test', 'password123');
+    expect(router.currentRoute.value.name).toBe('admin-dashboard');
+  });
+
+  it('menyediakan tautan ke masuk admin dan pelanggan bisa menampilkan password', async () => {
+    const { wrapper } = await mountWithApp(LoginPage, { route: '/masuk' });
+    expect(wrapper.find('a[href="/admin/login"]').exists()).toBe(true);
+    expect(wrapper.find('#password').attributes('type')).toBe('password');
+    await wrapper.find('input[type="checkbox"]').setValue(true);
+    expect(wrapper.find('#password').attributes('type')).toBe('text');
+  });
 });

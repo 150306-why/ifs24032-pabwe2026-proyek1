@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/helpers/apiHelper', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }));
 
 import http from '@/helpers/apiHelper';
-import { fetchMe, login, register } from './authApi';
+import {
+  changePassword, fetchMe, login, register, updateProfile,
+} from './authApi';
 
 describe('authApi', () => {
   beforeEach(() => { vi.resetAllMocks(); });
@@ -24,5 +26,13 @@ describe('authApi', () => {
     http.get.mockResolvedValue({ data: { data: { id: 1 } } });
     await expect(fetchMe()).resolves.toEqual({ id: 1 });
     expect(http.get).toHaveBeenCalledWith('/auth/me');
+  });
+
+  it('updateProfile dan changePassword memakai PUT', async () => {
+    http.put.mockResolvedValue({ data: { data: { name: 'Baru' }, message: 'ok' } });
+    await expect(updateProfile({ name: 'Baru' })).resolves.toEqual({ name: 'Baru' });
+    expect(http.put).toHaveBeenCalledWith('/auth/profile', { name: 'Baru' });
+    await expect(changePassword({ current_password: 'a', new_password: 'b' })).resolves.toEqual({ data: { name: 'Baru' }, message: 'ok' });
+    expect(http.put).toHaveBeenLastCalledWith('/auth/password', { current_password: 'a', new_password: 'b' });
   });
 });

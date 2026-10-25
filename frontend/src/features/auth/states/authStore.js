@@ -21,11 +21,21 @@ export const useAuthStore = defineStore('auth', {
       this.user = user;
       localStorage.setItem(TOKEN_KEY, token);
     },
+    /** Masuk lalu mengembalikan data user agar pemanggil bisa menentukan tujuan berdasarkan role. */
     async login(credentials) {
-      this.setSession(await authApi.login(credentials));
+      const session = await authApi.login(credentials);
+      this.setSession(session);
+      return session.user;
     },
     async register(payload) {
       this.setSession(await authApi.register(payload));
+    },
+    async updateProfile(payload) {
+      this.user = await authApi.updateProfile(payload);
+      return this.user;
+    },
+    async changePassword(payload) {
+      await authApi.changePassword(payload);
     },
     async fetchMe() {
       try {

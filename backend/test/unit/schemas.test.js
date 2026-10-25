@@ -82,12 +82,14 @@ describe('routes.schema', () => {
 
 describe('schedules.schema', () => {
   it('listQuerySchema: nilai bawaan', () => {
-    expect(listQuerySchema.parse({})).toEqual({ page: 1, limit: 10 });
+    expect(listQuerySchema.parse({})).toEqual({ page: 1, limit: 10, order: 'asc' });
   });
 
   it('listQuerySchema: string di-coerce menjadi angka', () => {
     const r = listQuerySchema.parse({ origin: '1', destination: '2', date: '2026-10-25', page: '3', limit: '5' });
-    expect(r).toEqual({ origin: 1, destination: 2, date: '2026-10-25', page: 3, limit: 5 });
+    expect(r).toEqual({
+      origin: 1, destination: 2, date: '2026-10-25', page: 3, limit: 5, order: 'asc',
+    });
   });
 
   it('listQuerySchema: menolak batas dan format tidak valid', () => {

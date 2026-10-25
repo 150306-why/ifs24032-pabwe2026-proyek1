@@ -4,7 +4,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 const validate = require('../../middlewares/validate');
 const auth = require('../../middlewares/auth');
 const controller = require('./auth.controller');
-const { registerSchema, loginSchema } = require('./auth.schema');
+const { registerSchema, loginSchema, profileSchema, passwordSchema } = require('./auth.schema');
 
 const router = Router();
 
@@ -22,5 +22,7 @@ router.use(authLimiter);
 router.post('/register', validate(registerSchema), asyncHandler(controller.register));
 router.post('/login', validate(loginSchema), asyncHandler(controller.login));
 router.get('/me', auth, asyncHandler(controller.me));
+router.put('/profile', auth, validate(profileSchema), asyncHandler(controller.updateProfile));
+router.put('/password', auth, validate(passwordSchema), asyncHandler(controller.changePassword));
 
 module.exports = router;

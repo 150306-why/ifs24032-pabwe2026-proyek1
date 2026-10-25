@@ -35,8 +35,8 @@ describe('ScheduleCard', () => {
 
   it('sisa kursi sedikit ditandai merah, banyak berwarna netral', () => {
     const few = render({ seats_left: 5 }).findAll('p').find((p) => p.text().startsWith('Sisa'));
-    expect(few.classes()).toContain('text-red-700');
+    expect(few.classes()).toContain('text-ulos-700');
     const many = render({ seats_left: 50 }).findAll('p').find((p) => p.text().startsWith('Sisa'));
-    expect(many.classes()).toContain('text-slate-600');
+    expect(many.classes()).toContain('text-slate-500');
   });
 });

@@ -8,7 +8,7 @@ vi.mock('@/features/admin/api/adminApi', () => ({
   resourceApi: (path) => {
     if (!apis[path]) {
       apis[path] = {
-        list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(),
+        list: vi.fn(), listPaged: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(),
       };
     }
     return apis[path];
@@ -53,7 +53,7 @@ describe('AdminResourcePage', () => {
     apis['/ports'].list.mockResolvedValue(PORTS);
     apis['/boats'].list.mockResolvedValue(BOATS);
     apis['/routes'].list.mockResolvedValue(ROUTES);
-    apis['/schedules'].list.mockResolvedValue(SCHEDULES);
+    apis['/schedules'].listPaged.mockResolvedValue({ items: SCHEDULES, pagination: { page: 1, limit: 10, total: 1 } });
     confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
@@ -63,7 +63,6 @@ describe('AdminResourcePage', () => {
     it('menampilkan judul, navigasi, dan tabel data', async () => {
       const { wrapper } = await render('ports');
       expect(wrapper.find('h1').text()).toBe('Kelola Pelabuhan');
-      expect(wrapper.find('nav[aria-label="Menu admin"]').exists()).toBe(true);
       expect(wrapper.find('caption').text()).toBe('Daftar Pelabuhan');
       const rows = rowTexts(wrapper);
       expect(rows).toHaveLength(2);
@@ -91,7 +90,7 @@ describe('AdminResourcePage', () => {
       const { wrapper } = await render('ports');
       expect(wrapper.find('form').exists()).toBe(false);
 
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       expect(wrapper.find('form').exists()).toBe(true);
       await wrapper.find('#f-name').setValue('  Pelabuhan Baru ');
       await wrapper.find('form').trigger('submit');
@@ -105,7 +104,7 @@ describe('AdminResourcePage', () => {
     it('simpan gagal menampilkan pesan dan error field, form tetap terbuka', async () => {
       apis['/ports'].create.mockRejectedValue(apiError('Data tidak valid', { name: 'Nama minimal 2 karakter' }));
       const { wrapper } = await render('ports');
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       await wrapper.find('#f-name').setValue('A');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -130,7 +129,7 @@ describe('AdminResourcePage', () => {
 
     it('Batal menutup form tanpa menyimpan', async () => {
       const { wrapper } = await render('ports');
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       await findByText(wrapper, 'button', 'Batal').trigger('click');
       expect(wrapper.find('form').exists()).toBe(false);
       expect(apis['/ports'].create).not.toHaveBeenCalled();
@@ -170,7 +169,7 @@ describe('AdminResourcePage', () => {
       expect(rowTexts(wrapper)[0]).toContain('KMP Toba Sejahtera');
       expect(rowTexts(wrapper)[0]).toContain('ferry');
 
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       await wrapper.find('#f-name').setValue('Boat Baru');
       await wrapper.find('#f-type').setValue('speedboat');
       await wrapper.find('#f-capacity').setValue('15');
@@ -187,7 +186,7 @@ describe('AdminResourcePage', () => {
       expect(rowTexts(wrapper)[0]).toContain('Ajibata → Tomok');
       expect(rowTexts(wrapper)[0]).toContain('60 mnt');
 
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       const options = wrapper.find('#f-origin_port_id').findAll('option').map((o) => o.text());
       expect(options).toEqual(['Pilih…', 'Ajibata', 'Tomok']);
 
@@ -209,7 +208,7 @@ describe('AdminResourcePage', () => {
     it('pilihan gagal dimuat tidak merusak halaman', async () => {
       apis['/ports'].list.mockRejectedValue(new Error('gagal'));
       const { wrapper } = await render('routes');
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       expect(wrapper.find('#f-origin_port_id').findAll('option')).toHaveLength(1);
     });
   });
@@ -219,7 +218,7 @@ describe('AdminResourcePage', () => {
       const { wrapper } = await render('schedules');
       expect(rowTexts(wrapper)[0]).toContain('5/120');
 
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       expect(wrapper.find('#f-route_id').exists()).toBe(true);
       expect(wrapper.find('#f-status').exists()).toBe(false);
       expect(wrapper.find('#f-route_id').findAll('option').map((o) => o.text())).toContain('Ajibata → Tomok');
@@ -234,7 +233,7 @@ describe('AdminResourcePage', () => {
     it('tambah jadwal mengirim payload dengan waktu ISO', async () => {
       apis['/schedules'].create.mockResolvedValue({});
       const { wrapper } = await render('schedules');
-      await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+      await findByText(wrapper, 'button', 'Tambah').trigger('click');
       await wrapper.find('#f-route_id').setValue('3');
       await wrapper.find('#f-boat_id').setValue('1');
       await wrapper.find('#f-departure_at').setValue('2030-01-01T08:00');
@@ -265,7 +264,7 @@ describe('AdminResourcePage', () => {
 
   it('berpindah resource lewat route memuat data resource baru dan menutup form', async () => {
     const { wrapper, router } = await render('ports');
-    await findByText(wrapper, 'button', '+ Tambah').trigger('click');
+    await findByText(wrapper, 'button', 'Tambah').trigger('click');
     expect(wrapper.find('form').exists()).toBe(true);
 
     await router.push('/admin/boats');
@@ -273,5 +272,30 @@ describe('AdminResourcePage', () => {
     expect(wrapper.find('h1').text()).toBe('Kelola Kapal');
     expect(wrapper.find('form').exists()).toBe(false);
     expect(apis['/boats'].list).toHaveBeenCalled();
+  });
+
+  it('pencarian menyaring baris di sisi klien dan menampilkan pesan bila tidak ada hasil', async () => {
+    const { wrapper } = await render('ports');
+    await wrapper.find('input[type="search"]').setValue('tomo');
+    expect(rowTexts(wrapper)).toHaveLength(1);
+    expect(rowTexts(wrapper)[0]).toContain('Tomok');
+    await wrapper.find('input[type="search"]').setValue('zzz');
+    expect(wrapper.find('tbody').text()).toContain('Tidak ada hasil');
+  });
+
+  it('jadwal memakai paginasi server: memuat halaman, urut terbaru, dan pindah halaman', async () => {
+    apis['/schedules'].listPaged.mockResolvedValue({ items: SCHEDULES, pagination: { page: 1, limit: 10, total: 25 } });
+    const { wrapper } = await render('schedules');
+    expect(apis['/schedules'].listPaged).toHaveBeenCalledWith({ page: 1, limit: 10, order: 'desc' });
+    expect(wrapper.find('input[type="search"]').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Halaman 1 / 3');
+    await findByText(wrapper, 'button', 'Berikutnya').trigger('click');
+    await flushPromises();
+    expect(apis['/schedules'].listPaged).toHaveBeenLastCalledWith({ page: 2, limit: 10, order: 'desc' });
+  });
+
+  it('status jadwal tampil sebagai lencana', async () => {
+    const { wrapper } = await render('schedules');
+    expect(wrapper.find('tbody span.capitalize').text()).toBe('open');
   });
 });

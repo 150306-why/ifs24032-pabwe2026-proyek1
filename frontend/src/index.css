@@ -2,11 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .card { @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6; }
-  .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900
-      focus:border-lake-600 focus:outline-none focus:ring-2 focus:ring-lake-500;
+@layer base {
+  :root { color-scheme: light; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-mist font-sans text-ink antialiased;
+    font-feature-settings: 'tnum' 1;
   }
-  .page-title { @apply mb-4 text-2xl font-bold text-lake-900; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { @apply outline-none ring-2 ring-lake-500 ring-offset-2; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-lake-100 bg-white p-4 shadow-lift sm:p-6; }
+  .card-flat { @apply rounded-2xl border border-lake-100 bg-white; }
+  .input {
+    @apply block w-full rounded-xl border border-lake-200 bg-white px-3.5 py-2.5 text-ink placeholder:text-slate-400
+      transition focus:border-lake-600 focus:outline-none focus:ring-2 focus:ring-lake-500/40;
+  }
+  .input[aria-invalid='true'] { @apply border-ulos-500 focus:ring-ulos-500/30; }
+  .page-title { @apply mb-1 text-3xl font-bold text-lake-900; }
+  .page-lead { @apply mb-6 max-w-2xl text-slate-600; }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-lake-200 bg-white px-3.5 py-1.5 text-sm font-medium text-lake-800
+      transition hover:border-lake-500 hover:bg-lake-50;
+  }
+  .chip[aria-pressed='true'], .chip.is-active { @apply border-lake-800 bg-lake-800 text-white hover:bg-lake-800; }
+  .table-wrap { @apply overflow-x-auto rounded-2xl border border-lake-100 bg-white shadow-lift; }
+  .table-base { @apply w-full text-left text-sm; }
+  .table-base thead { @apply bg-lake-50 text-lake-900; }
+  .table-base th { @apply whitespace-nowrap px-4 py-3 font-semibold; }
+  .table-base td { @apply px-4 py-3 align-middle; }
+  .table-base tbody tr { @apply border-t border-lake-50 transition-colors hover:bg-lake-50/50; }
+  .link { @apply font-medium text-lake-700 underline decoration-lake-300 underline-offset-4 hover:text-lake-900 hover:decoration-lake-700; }
+
+  /* Pita tenun bermotif pucuk rebung ala ulos Batak; penanda identitas, dipakai hemat. */
+  .ulos-band {
+    height: 10px;
+    background-color: #b8271f;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='10' viewBox='0 0 28 10'%3E%3Cpath d='M0 10 7 0l7 10z' fill='%2314212b'/%3E%3Cpath d='M14 0l7 10 7-10z' fill='%23faf7f0'/%3E%3Cpath d='M0 0h28v1.5H0z' fill='%23d09a2c'/%3E%3C/svg%3E");
+    background-size: 28px 10px;
+    background-repeat: repeat-x;
+  }
+  .ulos-band-thin { height: 6px; background-size: 17px 6px; }
+
+  /* Tiket ala boarding pass: badan putih, sobekan dipisah garis putus-putus. */
+  .pass { @apply relative rounded-2xl bg-white shadow-pass; }
+  .pass-divider { border-top: 2px dashed theme('colors.lake.200'); }
+}
+
+@media print {
+  header, footer, .no-print, nav { display: none !important; }
+  body { background: #fff !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .pass { box-shadow: none !important; border: 1px solid #b0d5de; break-inside: avoid; margin-bottom: 12px; }
+  .ulos-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

@@ -13,4 +13,13 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password wajib diisi').max(72),
 });
 
-module.exports = { registerSchema, loginSchema };
+const profileSchema = z.object({
+  name: z.string().trim().min(2, 'Nama minimal 2 karakter').max(80),
+});
+
+const passwordSchema = z.object({
+  current_password: z.string().min(1, 'Password saat ini wajib diisi').max(72),
+  new_password: z.string().min(8, 'Password baru minimal 8 karakter').max(72),
+});
+
+module.exports = { registerSchema, loginSchema, profileSchema, passwordSchema };

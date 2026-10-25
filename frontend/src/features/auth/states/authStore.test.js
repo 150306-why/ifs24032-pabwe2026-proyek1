@@ -5,6 +5,8 @@ vi.mock('@/features/auth/api/authApi', () => ({
   login: vi.fn(),
   register: vi.fn(),
   fetchMe: vi.fn(),
+  updateProfile: vi.fn(),
+  changePassword: vi.fn(),
 }));
 
 import * as authApi from '@/features/auth/api/authApi';
@@ -78,5 +80,23 @@ describe('auth store', () => {
     await auth.fetchMe();
     expect(auth.isAuthenticated).toBe(false);
     expect(localStorage.getItem('tobatix_token')).toBeNull();
+  });
+
+  it('login mengembalikan user agar pemanggil bisa memilih tujuan', async () => {
+    authApi.login.mockResolvedValue({ token: 't', user: { id: 1, role: 'admin' } });
+    await expect(useAuthStore().login({ email: 'a@b.c', password: 'x' })).resolves.toEqual({ id: 1, role: 'admin' });
+  });
+
+  it('updateProfile memperbarui user di store', async () => {
+    authApi.updateProfile.mockResolvedValue({ id: 1, name: 'Nama Baru', role: 'customer' });
+    const auth = useAuthStore();
+    await auth.updateProfile({ name: 'Nama Baru' });
+    expect(auth.user.name).toBe('Nama Baru');
+  });
+
+  it('changePassword meneruskan ke API', async () => {
+    authApi.changePassword.mockResolvedValue({});
+    await useAuthStore().changePassword({ current_password: 'a', new_password: 'b' });
+    expect(authApi.changePassword).toHaveBeenCalledWith({ current_password: 'a', new_password: 'b' });
   });
 });

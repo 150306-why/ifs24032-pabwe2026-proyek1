@@ -23,15 +23,29 @@ describe('AppHeader', () => {
     const { wrapper } = await mountWithApp(AppHeader, { auth: customer });
     const text = wrapper.text();
     expect(text).toContain('Tiket saya');
+    expect(text).toContain('Profil');
+    expect(text).toContain('Cek tiket');
     expect(text).toContain('Budi');
     expect(text).toContain('Keluar');
     expect(text).not.toContain('Masuk');
     expect(findByText(wrapper, 'a', 'Admin')).toBeUndefined();
   });
 
-  it('admin melihat menu Admin', async () => {
+  it('admin melihat menu Admin dan tidak melihat menu pelanggan', async () => {
     const { wrapper } = await mountWithApp(AppHeader, { auth: admin });
     expect(findByText(wrapper, 'a', 'Admin').attributes('href')).toBe('/admin');
+    expect(wrapper.text()).not.toContain('Tiket saya');
+  });
+
+  it('tombol menu membuka dan menutup navigasi di layar kecil', async () => {
+    const { wrapper } = await mountWithApp(AppHeader);
+    const toggle = wrapper.find('button[aria-controls="menu-utama"]');
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    await toggle.trigger('click');
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.find('#menu-utama').classes()).toContain('flex');
+    await wrapper.find('#menu-utama').trigger('click');
+    expect(toggle.attributes('aria-expanded')).toBe('false');
   });
 
   it('Keluar menghapus sesi dan kembali ke beranda', async () => {

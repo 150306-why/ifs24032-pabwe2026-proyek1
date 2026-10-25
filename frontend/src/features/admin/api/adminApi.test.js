@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/helpers/apiHelper', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }));
 
 import http from '@/helpers/apiHelper';
-import { checkInTicket, resourceApi } from './adminApi';
+import {
+  checkInTicket, fetchAdminBookings, fetchAdminUsers, fetchStats, resourceApi,
+} from './adminApi';
 
 describe('adminApi resourceApi', () => {
   beforeEach(() => { vi.resetAllMocks(); });
@@ -43,5 +45,26 @@ describe('adminApi checkInTicket', () => {
     http.post.mockResolvedValue({ data: { data: { checked_in: true } } });
     await expect(checkInTicket('TK-A/B')).resolves.toEqual({ checked_in: true });
     expect(http.post).toHaveBeenCalledWith('/tickets/TK-A%2FB/checkin');
+  });
+});
+
+describe('adminApi dasbor dan daftar', () => {
+  beforeEach(() => { vi.resetAllMocks(); });
+
+  it('listPaged mengembalikan data apa adanya dengan params', async () => {
+    http.get.mockResolvedValue({ data: { data: { items: [], pagination: { total: 0 } } } });
+    const api = resourceApi('/schedules', '/schedules/admin/list');
+    await expect(api.listPaged({ page: 2, limit: 10 })).resolves.toEqual({ items: [], pagination: { total: 0 } });
+    expect(http.get).toHaveBeenCalledWith('/schedules/admin/list', { params: { page: 2, limit: 10 } });
+  });
+
+  it('fetchStats, fetchAdminBookings, fetchAdminUsers', async () => {
+    http.get.mockResolvedValue({ data: { data: 'x' } });
+    await expect(fetchStats()).resolves.toBe('x');
+    expect(http.get).toHaveBeenCalledWith('/admin/stats');
+    await fetchAdminBookings({ status: 'paid' });
+    expect(http.get).toHaveBeenCalledWith('/admin/bookings', { params: { status: 'paid' } });
+    await fetchAdminUsers({ q: 'a' });
+    expect(http.get).toHaveBeenCalledWith('/admin/users', { params: { q: 'a' } });
   });
 });

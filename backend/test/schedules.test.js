@@ -58,3 +58,19 @@ describe('Jadwal dan otorisasi admin', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('Jadwal: urutan admin', () => {
+  let ctx;
+  beforeAll(async () => { ctx = await createTestContext(); });
+  afterAll(() => { releaseContext(ctx); });
+
+  it('order=desc mengurutkan keberangkatan terbaru lebih dulu; nilai lain ditolak', async () => {
+    const asc = await request(ctx.app).get('/api/schedules/admin/list?limit=50').set(bearer(ctx.adminToken));
+    const desc = await request(ctx.app).get('/api/schedules/admin/list?limit=50&order=desc').set(bearer(ctx.adminToken));
+    const times = (res) => res.body.data.items.map((s) => s.departure_at);
+    expect(times(asc)).toEqual([...times(asc)].sort());
+    expect(times(desc)).toEqual([...times(desc)].sort().reverse());
+    const bad = await request(ctx.app).get('/api/schedules/admin/list?order=acak').set(bearer(ctx.adminToken));
+    expect(bad.status).toBe(422);
+  });
+});

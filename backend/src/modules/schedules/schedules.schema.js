@@ -11,6 +11,7 @@ const listQuerySchema = z.object({
   date: dateOnly.optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
+  order: z.enum(['asc', 'desc']).default('asc'), // urutan waktu berangkat
 });
 
 const isoDate = z.string().datetime('Gunakan format ISO 8601 UTC, mis. 2026-11-01T01:00:00.000Z');

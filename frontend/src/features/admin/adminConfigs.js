@@ -28,6 +28,8 @@ const toNumber = (v) => (v === '' || v === null || v === undefined ? undefined :
 export const RESOURCES = {
   ports: {
     title: 'Pelabuhan',
+    icon: 'anchor',
+    singular: 'pelabuhan',
     api: resourceApi('/ports'),
     columns: [{ key: 'name', label: 'Nama', value: (r) => r.name }],
     fields: [{ key: 'name', label: 'Nama pelabuhan', type: 'text' }],
@@ -37,10 +39,12 @@ export const RESOURCES = {
   },
   boats: {
     title: 'Kapal',
+    icon: 'ship',
+    singular: 'kapal',
     api: resourceApi('/boats'),
     columns: [
       { key: 'name', label: 'Nama', value: (r) => r.name },
-      { key: 'type', label: 'Tipe', value: (r) => r.type },
+      { key: 'type', label: 'Tipe', value: (r) => r.type, kind: 'pill', tone: () => 'blue' },
       { key: 'capacity', label: 'Kapasitas', value: (r) => r.capacity },
     ],
     fields: [
@@ -54,6 +58,8 @@ export const RESOURCES = {
   },
   routes: {
     title: 'Rute',
+    icon: 'route',
+    singular: 'rute',
     api: resourceApi('/routes'),
     columns: [
       { key: 'route', label: 'Rute', value: (r) => `${r.origin.name} → ${r.destination.name}` },
@@ -84,13 +90,22 @@ export const RESOURCES = {
   },
   schedules: {
     title: 'Jadwal',
+    icon: 'calendar',
+    singular: 'jadwal',
+    paginated: true, // server berpaginasi, urut keberangkatan terbaru
     api: resourceApi('/schedules', '/schedules/admin/list'),
     columns: [
       { key: 'route', label: 'Rute', value: (r) => `${r.route.origin.name} → ${r.route.destination.name}` },
       { key: 'boat', label: 'Kapal', value: (r) => r.boat.name },
       { key: 'departure', label: 'Berangkat', value: (r) => formatDateTime(r.departure_at) },
       { key: 'seats', label: 'Terisi', value: (r) => `${r.booked}/${r.capacity}` },
-      { key: 'status', label: 'Status', value: (r) => r.status },
+      {
+        key: 'status',
+        label: 'Status',
+        value: (r) => r.status,
+        kind: 'pill',
+        tone: (r) => ({ open: 'green', closed: 'amber', cancelled: 'gray' }[r.status] || 'gray'),
+      },
     ],
     fields: [
       { key: 'route_id', label: 'Rute', type: 'select', optionsFrom: 'routes', createOnly: true },

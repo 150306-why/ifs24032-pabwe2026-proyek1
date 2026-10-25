@@ -1,30 +1,55 @@
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchSchedules } from '@/features/schedules/api/catalogApi';
+import { fetchPorts, fetchSchedules } from '@/features/schedules/api/catalogApi';
 import { useAsync } from '@/hooks/useAsync';
+import { dateInputFromToday, formatDateInput } from '@/helpers/formatHelper';
 import AsyncState from '@/features/common/components/AsyncState.vue';
+import PaginationBar from '@/features/common/components/PaginationBar.vue';
+import RouteSearchForm from '@/features/schedules/components/RouteSearchForm.vue';
 import ScheduleCard from '@/features/schedules/components/ScheduleCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 const schedules = useAsync(fetchSchedules);
+const ports = useAsync(fetchPorts);
 
 const items = computed(() => schedules.data.value?.items || []);
 const pagination = computed(() => schedules.data.value?.pagination);
-const hasNext = computed(() => pagination.value && pagination.value.page * pagination.value.limit < pagination.value.total);
+const dayChips = computed(() => Array.from({ length: 7 }, (_, i) => {
+  const value = dateInputFromToday(i);
+  return { value, label: i === 0 ? 'Hari ini' : formatDateInput(value) };
+}));
+const portName = (id) => (ports.data.value || []).find((p) => String(p.id) === String(id))?.name;
+const heading = computed(() => {
+  const { origin, destination } = route.query;
+  const from = portName(origin);
+  const to = portName(destination);
+  return from && to ? `${from} → ${to}` : 'Jadwal tersedia';
+});
 
 const load = () => schedules.run({ ...route.query, limit: 10 });
 watch(() => route.query, load, { immediate: true });
+onMounted(ports.run);
 
-function goToPage(page) {
-  router.push({ query: { ...route.query, page } });
-}
+const search = (query) => router.push({ query });
+const pickDate = (date) => router.push({ query: { ...route.query, date, page: undefined } });
+const goToPage = (page) => router.push({ query: { ...route.query, page } });
 </script>
 
 <template>
   <section>
-    <h1 class="page-title">Jadwal tersedia</h1>
+    <h1 class="page-title">{{ heading }}</h1>
+    <p class="page-lead !mb-5">Pilih keberangkatan, lalu isi data penumpang di langkah berikutnya.</p>
+
+    <div class="card mb-5 !p-4 sm:!p-5">
+      <RouteSearchForm :ports="ports.data.value || []" :initial="route.query" submit-label="Ubah pencarian" @search="search" />
+    </div>
+
+    <div v-if="route.query.date" class="mb-5 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Pilih tanggal cepat">
+      <button v-for="d in dayChips" :key="d.value" class="chip shrink-0" :aria-pressed="route.query.date === d.value" @click="pickDate(d.value)">{{ d.label }}</button>
+    </div>
+
     <AsyncState
       :loading="schedules.loading.value"
       :error="schedules.error.value"
@@ -35,15 +60,7 @@ function goToPage(page) {
       <ul class="space-y-3">
         <li v-for="s in items" :key="s.id"><ScheduleCard :schedule="s" /></li>
       </ul>
-      <div v-if="pagination" class="mt-4 flex items-center justify-between">
-        <button class="rounded-lg border border-lake-700 px-3 py-1 text-lake-800 disabled:opacity-50" :disabled="pagination.page <= 1" @click="goToPage(pagination.page - 1)">
-          Sebelumnya
-        </button>
-        <span class="text-sm text-slate-600">Halaman {{ pagination.page }}</span>
-        <button class="rounded-lg border border-lake-700 px-3 py-1 text-lake-800 disabled:opacity-50" :disabled="!hasNext" @click="goToPage(pagination.page + 1)">
-          Berikutnya
-        </button>
-      </div>
+      <PaginationBar v-if="pagination" :page="pagination.page" :limit="pagination.limit" :total="pagination.total" @change="goToPage" />
     </AsyncState>
   </section>
 </template>

@@ -8,6 +8,7 @@ vi.mock('./helpers/apiHelper', () => ({
 }));
 vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn().mockResolvedValue([]),
+  fetchRoutes: vi.fn().mockResolvedValue([]),
   fetchSchedules: vi.fn(),
   fetchSchedule: vi.fn(),
 }));

@@ -17,4 +17,14 @@ function me(req, res) {
   res.json({ data: user, message: 'OK' });
 }
 
-module.exports = { register, login, me };
+function updateProfile(req, res) {
+  const user = authService.updateProfile(db(req), req.user.id, req.valid.body);
+  res.json({ data: user, message: 'Profil diperbarui' });
+}
+
+function changePassword(req, res) {
+  authService.changePassword(db(req), req.user.id, req.valid.body);
+  res.json({ data: null, message: 'Password berhasil diganti' });
+}
+
+module.exports = { register, login, me, updateProfile, changePassword };

@@ -4,7 +4,7 @@ import StatusBadge from './StatusBadge.vue';
 
 describe('StatusBadge', () => {
   it.each([
-    ['pending', 'Menunggu pembayaran', 'bg-amber-100'],
+    ['pending', 'Menunggu pembayaran', 'bg-gold-100'],
     ['paid', 'Lunas', 'bg-pine-100'],
     ['cancelled', 'Dibatalkan', 'bg-slate-200'],
   ])('menampilkan label dan warna untuk %s', (status, label, cls) => {

@@ -10,6 +10,7 @@ const routesRoutes = require('./modules/routes/routes.routes');
 const schedulesRoutes = require('./modules/schedules/schedules.routes');
 const bookingsRoutes = require('./modules/bookings/bookings.routes');
 const ticketsRoutes = require('./modules/tickets/tickets.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
 
 /**
  * Membuat instance Express. Dependensi (db) disuntikkan agar mudah diuji.
@@ -32,6 +33,7 @@ function createApp({ db }) {
   api.use('/schedules', schedulesRoutes);
   api.use('/bookings', bookingsRoutes);
   api.use('/tickets', ticketsRoutes);
+  api.use('/admin', adminRoutes);
   app.use('/api', api);
 
   app.use(notFoundHandler);

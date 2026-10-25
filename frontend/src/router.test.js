@@ -7,16 +7,26 @@ vi.mock('@/features/auth/api/authApi', () => ({
   fetchMe: vi.fn(),
 }));
 // Halaman dimuat sungguhan (lazy import) tetapi tanpa permintaan jaringan.
-vi.mock('@/features/schedules/api/catalogApi', () => ({ fetchPorts: vi.fn(), fetchSchedules: vi.fn(), fetchSchedule: vi.fn() }));
+vi.mock('@/features/schedules/api/catalogApi', () => ({
+  fetchPorts: vi.fn(), fetchRoutes: vi.fn(), fetchSchedules: vi.fn(), fetchSchedule: vi.fn(),
+}));
 vi.mock('@/features/bookings/api/bookingApi', () => ({
   createBooking: vi.fn(), fetchBookings: vi.fn(), fetchBooking: vi.fn(), payBooking: vi.fn(), cancelBooking: vi.fn(),
 }));
 vi.mock('@/features/admin/api/adminApi', () => ({
   resourceApi: () => ({
-    list: vi.fn().mockResolvedValue([]), create: vi.fn(), update: vi.fn(), remove: vi.fn(),
+    list: vi.fn().mockResolvedValue([]),
+    listPaged: vi.fn().mockResolvedValue({ items: [], pagination: { page: 1, limit: 10, total: 0 } }),
+    create: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
   }),
   checkInTicket: vi.fn(),
+  fetchStats: vi.fn(),
+  fetchAdminBookings: vi.fn(),
+  fetchAdminUsers: vi.fn(),
 }));
+vi.mock('@/features/tickets/api/ticketApi', () => ({ verifyTicket: vi.fn() }));
 
 import * as authApi from '@/features/auth/api/authApi';
 import { useAuthStore } from '@/features/auth/states/authStore';
@@ -49,6 +59,13 @@ describe('authGuard', () => {
     });
   });
 
+  it('halaman admin tanpa login diarahkan ke pintu masuk admin', async () => {
+    await expect(authGuard(route({ requiresAuth: true, role: 'admin' }, '/admin/schedules'))).resolves.toEqual({
+      name: 'admin-login',
+      query: { redirect: '/admin/schedules' },
+    });
+  });
+
   it('pengguna login boleh membuka halaman yang butuh login', async () => {
     loginAs('customer');
     await expect(authGuard(route({ requiresAuth: true }))).resolves.toBe(true);
@@ -66,6 +83,11 @@ describe('authGuard', () => {
   it('halaman khusus tamu (login/daftar) mengalihkan pengguna yang sudah login', async () => {
     loginAs('customer');
     await expect(authGuard(route({ guestOnly: true }))).resolves.toEqual({ name: 'home' });
+  });
+
+  it('halaman khusus tamu mengalihkan admin yang sudah login ke dasbor', async () => {
+    loginAs('admin');
+    await expect(authGuard(route({ guestOnly: true }))).resolves.toEqual({ name: 'admin-dashboard' });
   });
 
   it('halaman khusus tamu boleh dibuka tamu', async () => {
@@ -104,6 +126,7 @@ describe('definisi router', () => {
     expect(names).toEqual(expect.arrayContaining([
       'home', 'schedules', 'schedule-detail', 'login', 'register', 'my-bookings',
       'booking-detail', 'payment', 'admin-checkin', 'admin-resource', 'not-found',
+      'admin-login', 'admin-dashboard', 'admin-bookings', 'admin-users', 'profile', 'verify-ticket',
     ]));
   });
 
@@ -111,10 +134,14 @@ describe('definisi router', () => {
     const meta = (name) => router.getRoutes().find((r) => r.name === name).meta;
     expect(meta('my-bookings')).toEqual({ requiresAuth: true });
     expect(meta('payment')).toEqual({ requiresAuth: true });
-    expect(meta('login')).toEqual({ guestOnly: true });
-    expect(meta('register')).toEqual({ guestOnly: true });
-    expect(meta('admin-checkin')).toEqual({ requiresAuth: true, role: 'admin' });
-    expect(meta('admin-resource')).toEqual({ requiresAuth: true, role: 'admin' });
+    expect(meta('profile')).toEqual({ requiresAuth: true });
+    expect(meta('login')).toEqual({ guestOnly: true, layout: 'bare' });
+    expect(meta('admin-login')).toEqual({ guestOnly: true, layout: 'bare' });
+    expect(meta('register')).toEqual({ guestOnly: true, layout: 'bare' });
+    const admin = { requiresAuth: true, role: 'admin', layout: 'admin' };
+    ['admin-dashboard', 'admin-checkin', 'admin-bookings', 'admin-users', 'admin-resource'].forEach((n) => {
+      expect(meta(n)).toEqual(admin);
+    });
     expect(meta('home')).toEqual({});
   });
 
@@ -132,11 +159,29 @@ describe('definisi router', () => {
     expect(router.currentRoute.value.name).toBe('not-found');
   });
 
-  it('/admin dialihkan ke kelola jadwal untuk admin', async () => {
+  it('/admin membuka dasbor untuk admin dan /admin/schedules tetap bisa dibuka', async () => {
     loginAs('admin');
     await router.push('/admin');
-    expect(router.currentRoute.value.fullPath).toBe('/admin/schedules');
+    expect(router.currentRoute.value.name).toBe('admin-dashboard');
+    await router.push('/admin/schedules');
     expect(router.currentRoute.value.name).toBe('admin-resource');
+  });
+
+  it('/auth/login adalah alias halaman masuk pelanggan', async () => {
+    await router.push('/auth/login');
+    expect(router.currentRoute.value.name).toBe('login');
+  });
+
+  it('tamu yang membuka halaman admin diarahkan ke login admin', async () => {
+    await router.push('/admin/schedules');
+    expect(router.currentRoute.value.name).toBe('admin-login');
+    expect(router.currentRoute.value.query.redirect).toBe('/admin/schedules');
+  });
+
+  it('admin yang sudah login dialihkan dari /admin/login ke dasbor', async () => {
+    loginAs('admin');
+    await router.push('/admin/login');
+    expect(router.currentRoute.value.name).toBe('admin-dashboard');
   });
 
   it('customer tidak bisa membuka halaman admin', async () => {

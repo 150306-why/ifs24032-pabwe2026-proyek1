@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  formatDateTime, formatDuration, formatRupiah, formatTime, todayInput, toLocalInput,
+  addMinutes, dateInputFromToday, formatDateInput, formatDateTime, formatDayShort, formatDuration, formatRupiah,
+  formatTime, todayInput, toLocalInput,
 } from './formatHelper';
 
 describe('format', () => {
@@ -42,5 +43,26 @@ describe('format tanggal input', () => {
   it('toLocalInput mengubah ISO ke nilai datetime-local (waktu lokal)', () => {
     const iso = new Date(2026, 9, 24, 8, 5).toISOString();
     expect(toLocalInput(iso)).toBe('2026-10-24T08:05');
+  });
+});
+
+describe('format tanggal untuk pencarian', () => {
+  it('addMinutes menambah menit pada waktu ISO', () => {
+    expect(addMinutes('2030-01-01T01:00:00.000Z', 90)).toBe('2030-01-01T02:30:00.000Z');
+  });
+
+  it('formatDayShort memakai zona WIB', () => {
+    expect(formatDayShort('2030-01-01T20:00:00.000Z')).toContain('2 Jan');
+  });
+
+  it('formatDateInput tidak bergeser zona waktu', () => {
+    expect(formatDateInput('2030-01-15')).toContain('15 Jan');
+  });
+
+  it('dateInputFromToday menambah hari dari hari ini', () => {
+    expect(dateInputFromToday()).toBe(todayInput());
+    const base = new Date(`${todayInput()}T12:00:00`);
+    base.setDate(base.getDate() + 3);
+    expect(dateInputFromToday(3)).toBe(base.toLocaleDateString('sv-SE'));
   });
 });

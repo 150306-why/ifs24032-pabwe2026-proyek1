@@ -38,7 +38,9 @@ function toSchedule(row) {
  * Daftar jadwal berpaginasi. Publik: hanya open dan belum berangkat.
  * Klausa WHERE dirakit dari potongan tetap; semua nilai lewat parameter (anti SQL injection).
  */
-function list(db, { origin, destination, date, page, limit }, { publicOnly = true } = {}) {
+function list(db, {
+  origin, destination, date, page, limit, order = 'asc',
+}, { publicOnly = true } = {}) {
   expirePending(db);
   const where = [];
   const params = [];
@@ -59,7 +61,7 @@ function list(db, { origin, destination, date, page, limit }, { publicOnly = tru
     .prepare(`SELECT COUNT(*) AS total FROM schedules s JOIN routes r ON r.id = s.route_id ${clause}`)
     .get(...params);
   const rows = db
-    .prepare(`${SELECT_SQL} ${clause} ORDER BY s.departure_at ASC LIMIT ? OFFSET ?`)
+    .prepare(`${SELECT_SQL} ${clause} ORDER BY s.departure_at ${order === 'desc' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`)
     .all(...params, limit, (page - 1) * limit);
   return { items: rows.map(toSchedule), pagination: { page, limit, total } };
 }

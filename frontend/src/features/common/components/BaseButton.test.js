@@ -7,13 +7,15 @@ describe('BaseButton', () => {
     const wrapper = mount(BaseButton, { slots: { default: 'Simpan' } });
     expect(wrapper.text()).toBe('Simpan');
     expect(wrapper.attributes('type')).toBe('button');
-    expect(wrapper.classes()).toContain('bg-lake-700');
+    expect(wrapper.classes()).toContain('bg-lake-800');
   });
 
   it.each([
-    ['secondary', 'border-lake-700'],
-    ['danger', 'bg-red-700'],
-    ['primary', 'bg-lake-700'],
+    ['secondary', 'border-lake-200'],
+    ['danger', 'text-ulos-700'],
+    ['primary', 'bg-lake-800'],
+    ['accent', 'bg-ulos-600'],
+    ['ghost', 'hover:bg-lake-100'],
   ])('varian %s', (variant, cls) => {
     expect(mount(BaseButton, { props: { variant } }).classes()).toContain(cls);
   });

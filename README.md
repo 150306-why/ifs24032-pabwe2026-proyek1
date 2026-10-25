@@ -10,7 +10,9 @@ Aplikasi pemesanan tiket kapal penyeberangan dan wisata di Danau Toba. Proyek 1 
 - Pemesanan dengan banyak penumpang (dewasa/anak), total harga live; harga final selalu dihitung server.
 - Pembayaran simulasi dengan hitung mundur 15 menit; booking kadaluarsa otomatis batal dan kuota kembali.
 - Tiket dengan kode QR, pembatalan booking (kuota dikembalikan), verifikasi tiket publik.
-- Admin: kelola pelabuhan, kapal, rute (+tarif), jadwal, dan check-in tiket.
+- Dua pintu masuk terpisah: `/masuk` (alias `/auth/login`) untuk pelanggan dan `/admin/login` untuk admin. Halaman admin menolak akun pelanggan.
+- Pelanggan: profil (ubah nama, ganti password), tiket bergaya boarding pass dengan QR, cetak tiket, filter status pesanan, cek keaslian tiket publik (`/verifikasi`).
+- Admin (layout sidebar): dasbor (pendapatan 7 hari, status booking, rute terlaris, keberangkatan hari ini), kelola pelabuhan, kapal, rute (+tarif), jadwal (berpaginasi), semua booking (filter, cari, batalkan), daftar pengguna, dan check-in tiket.
 - Keamanan: bcrypt, JWT, validasi zod, helmet, CORS terbatas, rate limit pada `/auth`, query terparameter, otorisasi per resource.
 
 ## Tech stack
@@ -57,10 +59,15 @@ Respons sukses `{ data, message }`, respons gagal `{ message, errors? }`.
 | GET | `/routes` | publik | Daftar rute + tarif |
 | GET | `/schedules?origin=&destination=&date=&page=&limit=` | publik | Jadwal open, masa depan; `origin`/`destination` = id pelabuhan, `date` = YYYY-MM-DD (WIB) |
 | GET | `/schedules/:id` | publik | Detail jadwal |
+| PUT | `/auth/profile` | login | Ubah nama |
+| PUT | `/auth/password` | login | Ganti password (butuh password saat ini) |
+| GET | `/admin/stats` | admin | Ringkasan dasbor |
+| GET | `/admin/bookings?status=&q=&page=&limit=` | admin | Semua booking, filter dan pencarian |
+| GET | `/admin/users?role=&q=&page=&limit=` | admin | Daftar pengguna + jumlah booking dan total belanja |
 | POST/PUT/DELETE | `/ports`, `/ports/:id` | admin | CRUD pelabuhan |
 | GET/POST/PUT/DELETE | `/boats`, `/boats/:id` | admin | CRUD kapal |
 | POST/PUT/DELETE | `/routes`, `/routes/:id` | admin | CRUD rute + tarif (`fares: {dewasa, anak}`) |
-| GET | `/schedules/admin/list` | admin | Semua jadwal termasuk lampau |
+| GET | `/schedules/admin/list?order=asc\|desc` | admin | Semua jadwal termasuk lampau |
 | POST/PUT/DELETE | `/schedules`, `/schedules/:id` | admin | CRUD jadwal |
 | POST | `/bookings` | customer | `{ schedule_id, passengers: [{ name, category }] }`, maks. 10 |
 | GET | `/bookings` | customer | Booking milik sendiri |

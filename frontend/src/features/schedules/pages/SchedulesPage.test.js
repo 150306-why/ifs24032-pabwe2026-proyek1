@@ -4,6 +4,7 @@ import { apiError, findByText, mountWithApp, SAMPLE_SCHEDULE } from '@/test-util
 
 vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn(),
+  fetchRoutes: vi.fn(),
   fetchSchedules: vi.fn(),
   fetchSchedule: vi.fn(),
 }));

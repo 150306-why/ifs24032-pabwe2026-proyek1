@@ -7,11 +7,14 @@ describe('AdminNav', () => {
     const { wrapper } = await mountWithApp(AdminNav);
     const links = wrapper.findAll('a').map((a) => [a.text(), a.attributes('href')]);
     expect(links).toEqual([
+      ['Dasbor', '/admin'],
       ['Jadwal', '/admin/schedules'],
+      ['Booking', '/admin/bookings'],
+      ['Check-in', '/admin/checkin'],
       ['Rute', '/admin/routes'],
       ['Kapal', '/admin/boats'],
       ['Pelabuhan', '/admin/ports'],
-      ['Check-in', '/admin/checkin'],
+      ['Pengguna', '/admin/users'],
     ]);
     expect(wrapper.find('nav').attributes('aria-label')).toBe('Menu admin');
   });

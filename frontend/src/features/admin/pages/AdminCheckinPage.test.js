@@ -27,10 +27,10 @@ async function submit(wrapper, code) {
 describe('AdminCheckinPage', () => {
   beforeEach(() => { vi.resetAllMocks(); });
 
-  it('menampilkan navigasi admin dan formulir check-in', async () => {
+  it('menampilkan judul dan formulir check-in', async () => {
     const { wrapper } = await mountWithApp(AdminCheckinPage, { route: '/admin/checkin' });
     expect(wrapper.find('h1').text()).toBe('Check-in tiket');
-    expect(wrapper.find('nav[aria-label="Menu admin"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Belum ada check-in');
     expect(findByText(wrapper, 'button', 'Check-in')).toBeDefined();
   });
 

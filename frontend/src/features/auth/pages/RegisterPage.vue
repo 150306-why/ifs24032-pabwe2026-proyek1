@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/features/auth/states/authStore';
 import { getErrorMessage, getFieldErrors } from '@/helpers/errorHelper';
+import AuthShell from '@/features/auth/components/AuthShell.vue';
 import BaseButton from '@/features/common/components/BaseButton.vue';
 import BaseInput from '@/features/common/components/BaseInput.vue';
 
@@ -41,18 +42,17 @@ async function submit() {
 </script>
 
 <template>
-  <section class="card mx-auto max-w-md">
-    <h1 class="page-title">Daftar</h1>
+  <AuthShell title="Buat akun" lead="Cukup satu akun untuk memesan, membayar, dan menyimpan semua tiket.">
     <form class="space-y-4" novalidate @submit.prevent="submit">
       <BaseInput id="name" v-model="form.name" label="Nama lengkap" autocomplete="name" :error="errors.name" />
       <BaseInput id="email" v-model="form.email" type="email" label="Email" autocomplete="email" :error="errors.email" />
       <BaseInput id="password" v-model="form.password" type="password" label="Password (min. 8 karakter)" autocomplete="new-password" :error="errors.password" />
       <BaseInput id="confirm" v-model="form.confirm" type="password" label="Ulangi password" autocomplete="new-password" :error="errors.confirm" />
-      <p v-if="message" class="text-red-700" role="alert">{{ message }}</p>
-      <BaseButton type="submit" class="w-full" :loading="loading">Buat akun</BaseButton>
+      <p v-if="message" class="rounded-xl bg-ulos-50 px-3.5 py-2.5 text-sm font-medium text-ulos-700" role="alert">{{ message }}</p>
+      <BaseButton type="submit" variant="accent" size="lg" class="w-full" :loading="loading">Buat akun</BaseButton>
     </form>
-    <p class="mt-4 text-sm text-slate-700">
-      Sudah punya akun? <RouterLink to="/masuk" class="text-lake-700 underline">Masuk</RouterLink>
-    </p>
-  </section>
+    <template #footer>
+      <p>Sudah punya akun? <RouterLink to="/masuk" class="link">Masuk</RouterLink></p>
+    </template>
+  </AuthShell>
 </template>
