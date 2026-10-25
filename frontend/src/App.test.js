@@ -6,7 +6,7 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import App from './App.vue';
 
 async function render() {
-  sessionStorage.clear();
+  localStorage.clear();
   const Page = defineComponent({ render: () => h('p', 'Isi halaman uji') });
   const router = createRouter({
     history: createMemoryHistory(),

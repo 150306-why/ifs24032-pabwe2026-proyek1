@@ -32,7 +32,7 @@ export function createTestRouter() {
  * @param {{ route?: string, props?: object, auth?: { token: string, user: object }, global?: object }} [options]
  */
 export async function mountWithApp(component, { route = '/', props = {}, auth, global = {} } = {}) {
-  sessionStorage.clear();
+  localStorage.clear();
   const pinia = createPinia();
   setActivePinia(pinia);
   if (auth) {

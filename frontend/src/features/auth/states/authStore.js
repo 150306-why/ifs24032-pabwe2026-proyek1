@@ -4,12 +4,13 @@ import * as authApi from '@/features/auth/api/authApi';
 const TOKEN_KEY = 'tobatix_token';
 
 /**
- * Token disimpan di sessionStorage: hilang saat tab ditutup dan tidak dibagi antar tab,
- * sehingga paparan jika terjadi XSS lebih sempit dibanding localStorage. Cookie httpOnly
- * lebih aman dari XSS tetapi butuh CSRF protection dan konfigurasi cookie lintas domain.
+ * Token disimpan di localStorage agar sesi bertahan antar tab/halaman (mis. membuka
+ * halaman terproteksi lewat URL langsung atau tab baru). Konsekuensinya token terbaca
+ * oleh JavaScript jika terjadi XSS; mitigasinya validasi/escape input dan CSP. Cookie
+ * httpOnly lebih aman dari XSS tetapi butuh CSRF protection dan konfigurasi lintas domain.
  */
 export const useAuthStore = defineStore('auth', {
-  state: () => ({ token: sessionStorage.getItem(TOKEN_KEY), user: null }),
+  state: () => ({ token: localStorage.getItem(TOKEN_KEY), user: null }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
     isAdmin: (state) => state.user?.role === 'admin',
@@ -18,7 +19,7 @@ export const useAuthStore = defineStore('auth', {
     setSession({ token, user }) {
       this.token = token;
       this.user = user;
-      sessionStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(TOKEN_KEY, token);
     },
     async login(credentials) {
       this.setSession(await authApi.login(credentials));
@@ -36,7 +37,7 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.token = null;
       this.user = null;
-      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
     },
   },
 });

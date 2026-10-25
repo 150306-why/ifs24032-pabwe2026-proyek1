@@ -33,7 +33,7 @@ function loginAs(role) {
 
 describe('authGuard', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     setActivePinia(createPinia());
     vi.resetAllMocks();
   });
@@ -73,7 +73,7 @@ describe('authGuard', () => {
   });
 
   it('token ada tetapi profil belum dimuat: profil diambil dari server', async () => {
-    sessionStorage.setItem('tobatix_token', 'tok');
+    localStorage.setItem('tobatix_token', 'tok');
     setActivePinia(createPinia());
     authApi.fetchMe.mockResolvedValue({ id: 1, name: 'Admin', role: 'admin' });
     await expect(authGuard(route({ requiresAuth: true, role: 'admin' }))).resolves.toBe(true);
@@ -81,20 +81,20 @@ describe('authGuard', () => {
   });
 
   it('token tidak valid: sesi dibersihkan dan pengguna diarahkan ke login', async () => {
-    sessionStorage.setItem('tobatix_token', 'basi');
+    localStorage.setItem('tobatix_token', 'basi');
     setActivePinia(createPinia());
     authApi.fetchMe.mockRejectedValue(new Error('401'));
     await expect(authGuard(route({ requiresAuth: true }, '/tiket-saya'))).resolves.toEqual({
       name: 'login',
       query: { redirect: '/tiket-saya' },
     });
-    expect(sessionStorage.getItem('tobatix_token')).toBeNull();
+    expect(localStorage.getItem('tobatix_token')).toBeNull();
   });
 });
 
 describe('definisi router', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     setActivePinia(createPinia());
     vi.resetAllMocks();
   });

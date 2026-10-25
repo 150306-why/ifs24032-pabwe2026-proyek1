@@ -12,7 +12,7 @@ import { useAuthStore } from './authStore';
 
 describe('auth store', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     setActivePinia(createPinia());
     vi.resetAllMocks();
   });
@@ -24,7 +24,7 @@ describe('auth store', () => {
     expect(authApi.login).toHaveBeenCalledWith({ email: 'a@b.c', password: 'x' });
     expect(auth.isAuthenticated).toBe(true);
     expect(auth.isAdmin).toBe(false);
-    expect(sessionStorage.getItem('tobatix_token')).toBe('abc');
+    expect(localStorage.getItem('tobatix_token')).toBe('abc');
   });
 
   it('register menyimpan sesi seperti login', async () => {
@@ -34,7 +34,7 @@ describe('auth store', () => {
     expect(authApi.register).toHaveBeenCalledWith({ name: 'Baru' });
     expect(auth.token).toBe('reg');
     expect(auth.user.name).toBe('Baru');
-    expect(sessionStorage.getItem('tobatix_token')).toBe('reg');
+    expect(localStorage.getItem('tobatix_token')).toBe('reg');
   });
 
   it('isAdmin true untuk role admin', async () => {
@@ -51,11 +51,11 @@ describe('auth store', () => {
     auth.logout();
     expect(auth.isAuthenticated).toBe(false);
     expect(auth.user).toBeNull();
-    expect(sessionStorage.getItem('tobatix_token')).toBeNull();
+    expect(localStorage.getItem('tobatix_token')).toBeNull();
   });
 
-  it('state awal membaca token dari sessionStorage', () => {
-    sessionStorage.setItem('tobatix_token', 'tersimpan');
+  it('state awal membaca token dari localStorage', () => {
+    localStorage.setItem('tobatix_token', 'tersimpan');
     setActivePinia(createPinia());
     const auth = useAuthStore();
     expect(auth.token).toBe('tersimpan');
@@ -71,12 +71,12 @@ describe('auth store', () => {
   });
 
   it('fetchMe gagal (token tidak valid) -> logout otomatis', async () => {
-    sessionStorage.setItem('tobatix_token', 'basi');
+    localStorage.setItem('tobatix_token', 'basi');
     setActivePinia(createPinia());
     authApi.fetchMe.mockRejectedValue(new Error('401'));
     const auth = useAuthStore();
     await auth.fetchMe();
     expect(auth.isAuthenticated).toBe(false);
-    expect(sessionStorage.getItem('tobatix_token')).toBeNull();
+    expect(localStorage.getItem('tobatix_token')).toBeNull();
   });
 });
