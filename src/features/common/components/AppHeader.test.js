@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { findByText, mountWithApp } from '@/test/helpers';
+import { findByText, mountWithApp } from '@/test-utils';
 import { useAuthStore } from '@/features/auth/states/authStore';
 import AppHeader from './AppHeader.vue';
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { findByText, mountWithApp, squash } from '@/test/helpers';
+import { findByText, mountWithApp, squash } from '@/test-utils';
 
 vi.mock('@/features/admin/api/adminApi', () => ({ fetchAdminUsers: vi.fn(), resourceApi: vi.fn(() => ({})) }));
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, findByText, mountWithApp } from '@/test/helpers';
+import { apiError, findByText, mountWithApp } from '@/test-utils';
 import { useToastStore } from '@/features/common/states/toastStore';
 
 vi.mock('@/features/admin/api/adminApi', () => ({ fetchAdminBookings: vi.fn(), resourceApi: vi.fn(() => ({})) }));

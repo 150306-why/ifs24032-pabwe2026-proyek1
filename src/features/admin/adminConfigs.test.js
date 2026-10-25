@@ -5,7 +5,7 @@ vi.mock('@/features/admin/api/adminApi', () => ({
 }));
 
 import { OPTION_SOURCES, RESOURCES } from './adminConfigs';
-import { squash } from '@/test/helpers';
+import { squash } from '@/test-utils';
 
 const route = {
   id: 3,

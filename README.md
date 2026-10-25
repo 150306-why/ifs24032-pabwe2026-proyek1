@@ -128,35 +128,34 @@ Test backend memakai SQLite in-memory (`DB_PATH=:memory:`) sehingga tidak menyen
 | Backend, alur API | `backend/test/*.test.js` | auth, katalog (pelabuhan/kapal/rute/jadwal admin), booking, tiket, infrastruktur HTTP |
 | Backend, unit | `backend/test/unit/*.test.js` | utils, middleware, skema zod, config/db/init/seed, `server.js`, service (booking, tiket, jadwal) |
 | Frontend | `src/**/*.test.js` di samping file yang diuji | api, state (store), hook, helper, komponen, page, router, `App.vue`, `main.js` |
-| Helper uji frontend | `src/test/helpers.js` (setup global di `src/test/setup.js`) | router uji, mount dengan Pinia, data contoh |
+| Helper uji frontend | `src/test-utils.js` (setup global di `src/setupTests.js`) | router uji, mount dengan Pinia, data contoh |
 
 Bagian `if (require.main === module)` pada `db/init.js` dan `db/seed.js` hanya berjalan lewat CLI (`npm run db:init`/`db:seed`) sehingga tidak terhitung di coverage.
 
 ## Jenkins (CI/CD)
 
-Pipeline ada di `Jenkinsfile` dan mengikuti pola proyek contoh `ifs24032-pabwe2026-sk-p5-vue`: build dan uji, lalu **paket ZIP** dipublikasikan ke Jenkins dan dideploy lewat API platform.
+Pipeline ada di `Jenkinsfile` (satu aplikasi, dibaca dari root repo). Alurnya: install, test dengan coverage, scan keamanan, analisis kode, lalu **paket ZIP** dipublikasikan ke Jenkins dan dideploy lewat API platform.
 
 | Stage | Isi |
 |---|---|
-| Checkout, Validate Parameters | Ambil kode; gagal cepat bila `VITE_API_URL` masih localhost atau ID website kosong |
-| Install Dependencies, Lint | `bun install` (image `oven/bun:alpine`) dan ESLint untuk backend dan frontend; test/lint/build tetap berjalan di Node 22 |
-| Test Backend / Test Frontend | Jest + Supertest dan Vitest, dengan coverage; hasil tampil di **Test Result** Jenkins |
-| Build Frontend | `npm run build` dengan `VITE_API_URL` dari parameter |
-| Trivy Security Scan | Pindai kerentanan HIGH/CRITICAL (hasil SARIF jadi artefak) |
-| SonarQube Analysis, Quality Gate | Analisis kode + coverage; build berhenti bila quality gate gagal |
-| Package Application | Membuat `backend-app.zip` dan `frontend-app.zip` (tanpa `node_modules`, `.env`, database) |
+| Checkout | `checkout scm` di container `oven/bun:alpine` |
+| Install Dependencies | `bun install` |
+| Test | `npx vitest run --coverage` (Node 24); menghasilkan `coverage/lcov.info` |
+| Trivy Security Scan | Pindai kerentanan HIGH/CRITICAL, hasil `trivy-results.sarif` |
+| SonarQube Analysis, Quality Gate | `sonar-scanner` memakai `sonar-project.properties`; build berhenti bila quality gate gagal |
+| Package Application | Membuat `latest-app.zip` (tanpa `node_modules`, `.env*`, `coverage`, `dist`) |
 | Publish Application | Arsipkan ZIP dan salin ke `userContent` Jenkins sehingga punya URL unduhan |
-| Deploy Application | Request redeploy ke platform dengan URL ZIP, lalu polling sampai `SUCCESS`/`FAIL` (backend dulu, lalu frontend) |
+| Deploy Application | Request redeploy ke platform dengan URL ZIP, lalu polling sampai `SUCCESS`/`FAIL` |
 
 **Menyiapkan Jenkins**
 
-1. Plugin: Pipeline, Docker Pipeline, JUnit, Warnings Next Generation (SARIF), SonarQube Scanner, Pipeline Utility Steps (`readJSON`/`writeJSON`).
+1. Plugin: Pipeline, Docker Pipeline, Warnings Next Generation (SARIF), SonarQube Scanner, Pipeline Utility Steps (`readJSON`).
 2. Konfigurasi server SonarQube bernama `SonarQube` (Manage Jenkins > System) dan webhook ke Jenkins untuk Quality Gate. Jenkins dan SonarQube berada di jaringan Docker `cicd-network`.
-3. Environment variable global (Manage Jenkins > System > Global properties): `URL_REDEPLOY`, `URL_PROGRESS`, `DEPLOY_TOKEN`, `WEBSITE_ID_BACKEND`, `WEBSITE_ID_FRONTEND`.
-4. Buat job **Pipeline** dengan "Pipeline script from SCM" yang menunjuk repo ini, lalu **Build with Parameters**.
-5. Ambil tangkapan layar Stage View, Test Result, dan hasil Quality Gate untuk laporan.
+3. Environment variable global: `URL_REDEPLOY`, `URL_PROGRESS`, `DEPLOY_TOKEN`, `WEBSITE_ID`.
+4. Buat job **Pipeline** dengan "Pipeline script from SCM" yang menunjuk repo ini.
+5. Ambil tangkapan layar Stage View dan hasil Quality Gate untuk laporan.
 
-**Urutan deploy pertama kali:** (a) jalankan build dengan `DEPLOY_FRONTEND` dimatikan untuk mendeploy backend, (b) catat URL backend online, (c) jalankan lagi dengan `VITE_API_URL=https://<url-backend>/api` untuk mendeploy frontend, (d) set `CORS_ORIGIN` backend ke URL frontend.
+`VITE_API_URL` produksi dibaca dari `.env.production` yang ada di repo (file `.env*` dikecualikan dari ZIP).
 
 ## Deploy online
 
@@ -197,8 +196,7 @@ dan Vercel membaca `package.json` langsung dari root.
       tickets/          api/, pages/
     helpers/            apiHelper (axios), errorHelper, formatHelper
     hooks/              useAsync, useCountdown, usePassengerForm
-    test/               setup.js, helpers.js (setup & helper uji bersama)
-    App.vue, main.js, router.js, index.css
+    App.vue, main.js, router.js, index.css, setupTests.js, test-utils.js
   public/               favicon.svg
   docs/                 Draft dokumen proyek dan skrip video demo
   index.html, vite.config.js, eslint.config.js, tailwind.config.js, postcss.config.js

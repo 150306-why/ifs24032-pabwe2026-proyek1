@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, mountWithApp } from '@/test/helpers';
+import { apiError, mountWithApp } from '@/test-utils';
 import { useAuthStore } from '@/features/auth/states/authStore';
 
 vi.mock('@/features/auth/api/authApi', () => ({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mountWithApp } from '@/test/helpers';
+import { mountWithApp } from '@/test-utils';
 import RouteSearchForm from './RouteSearchForm.vue';
 
 const PORTS = [{ id: 1, name: 'Ajibata' }, { id: 2, name: 'Tomok' }];

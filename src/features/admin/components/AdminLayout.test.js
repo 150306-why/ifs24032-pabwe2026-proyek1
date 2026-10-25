@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import { mountWithApp } from '@/test/helpers';
+import { mountWithApp } from '@/test-utils';
 import { useAuthStore } from '@/features/auth/states/authStore';
 import AdminLayout from './AdminLayout.vue';
 

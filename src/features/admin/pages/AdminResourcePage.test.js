@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, findByText, mountWithApp } from '@/test/helpers';
+import { apiError, findByText, mountWithApp } from '@/test-utils';
 
 // Satu objek API tiruan per path, dipakai bersama oleh RESOURCES dan OPTION_SOURCES.
 const { apis } = vi.hoisted(() => ({ apis: {} }));

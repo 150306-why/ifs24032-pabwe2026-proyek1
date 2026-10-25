@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, findByText, mountWithApp, SAMPLE_SCHEDULE } from '@/test/helpers';
+import { apiError, findByText, mountWithApp, SAMPLE_SCHEDULE } from '@/test-utils';
 
 vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn(),

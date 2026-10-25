@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mountWithApp } from '@/test/helpers';
+import { mountWithApp } from '@/test-utils';
 import AuthShell from './AuthShell.vue';
 
 const render = (props) => mountWithApp(AuthShell, { props: { title: 'Masuk', lead: 'Keterangan', ...props } });

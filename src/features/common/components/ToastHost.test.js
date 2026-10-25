@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mountWithApp } from '@/test/helpers';
+import { mountWithApp } from '@/test-utils';
 import { useToastStore } from '@/features/common/states/toastStore';
 import ToastHost from './ToastHost.vue';
 

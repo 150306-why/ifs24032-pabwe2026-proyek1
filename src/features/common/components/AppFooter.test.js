@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mountWithApp } from '@/test/helpers';
+import { mountWithApp } from '@/test-utils';
 import AppFooter from './AppFooter.vue';
 
 describe('AppFooter', () => {

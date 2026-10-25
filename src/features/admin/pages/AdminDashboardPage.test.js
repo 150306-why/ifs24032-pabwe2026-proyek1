@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, mountWithApp, squash } from '@/test/helpers';
+import { apiError, mountWithApp, squash } from '@/test-utils';
 
 vi.mock('@/features/admin/api/adminApi', () => ({ fetchStats: vi.fn(), resourceApi: vi.fn(() => ({})) }));
 

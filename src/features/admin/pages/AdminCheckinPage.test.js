@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
-import { apiError, findByText, mountWithApp } from '@/test/helpers';
+import { apiError, findByText, mountWithApp } from '@/test-utils';
 
 vi.mock('@/features/admin/api/adminApi', () => ({
   checkInTicket: vi.fn(),

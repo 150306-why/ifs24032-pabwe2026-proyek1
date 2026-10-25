@@ -8,14 +8,14 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ['./src/setupTests.js'],
     testTimeout: 20000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html', 'json-summary'],
       reportsDirectory: './coverage',
       include: ['src/**/*.{js,vue}'],
-      exclude: ['src/**/*.test.js', 'src/test/**'],
+      exclude: ['src/**/*.test.js', 'src/setupTests.js', 'src/test-utils.js'],
     },
   },
 });

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import {
   apiError, findByText, mountWithApp, SAMPLE_BOOKING, squash,
-} from '@/test/helpers';
+} from '@/test-utils';
 
 vi.mock('@/features/bookings/api/bookingApi', () => ({
   createBooking: vi.fn(),

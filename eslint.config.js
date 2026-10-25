@@ -21,7 +21,7 @@ export default [
     },
   },
   {
-    files: ['**/*.test.js', 'src/test/**/*.js', 'vite.config.js', 'tailwind.config.js', 'postcss.config.js'],
+    files: ['**/*.test.js', 'vite.config.js', 'tailwind.config.js', 'postcss.config.js'],
     languageOptions: { globals: { ...globals.node, ...globals.vitest } },
   },
 ];
