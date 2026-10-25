@@ -161,6 +161,11 @@ Platform menerima ZIP dari Jenkins dan membangun aplikasinya. Pengaturan per apl
 3. **Frontend** (`frontend-app.zip`, statis): build `npm run build`, output `dist`. `VITE_API_URL` sudah ditanam lewat `.env.production` saat paket dibuat. Fallback SPA diatur di `frontend/netlify.toml`.
 4. Uji: buka `<url-backend>/api/health`, lalu buka frontend dan coba login, cari jadwal, booking.
 
+### Alternatif: Vercel (dua project)
+
+- **Backend:** buat project Vercel dengan Root Directory `backend`, Application Preset **Other**. Entry serverless ada di `backend/api/index.js` dan `backend/vercel.json`. Environment variable: `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGIN` (URL frontend), `SEED_ADMIN_PASSWORD`, `SEED_CUSTOMER_PASSWORD`. DB SQLite ditulis ke `/tmp` (sementara), jadi akun dan booking baru bisa hilang saat instance baru dibuat.
+- **Frontend:** project Vercel dengan Root Directory `frontend`, preset Vite, `VITE_API_URL=https://<backend>.vercel.app/api`. Fallback SPA ada di `frontend/vercel.json`.
+
 ## Keputusan desain
 
 - Token JWT disimpan di `sessionStorage` (hilang saat tab ditutup, tidak ada `v-html` untuk data pengguna). Cookie httpOnly lebih tahan XSS tetapi butuh perlindungan CSRF dan konfigurasi lintas domain, jadi tidak dipakai di proyek ini.
