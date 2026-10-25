@@ -1,5 +1,5 @@
 <script setup>
-import AppHeader from '@/components/AppHeader.vue';
+import AppHeader from '@/features/common/components/AppHeader.vue';
 </script>
 
 <template>

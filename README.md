@@ -119,10 +119,10 @@ Test backend memakai SQLite in-memory (`DB_PATH=:memory:`) sehingga tidak menyen
 
 | Bagian | Lokasi | Isi |
 |---|---|---|
-| Backend, alur API | `backend/tests/*.test.js` | auth, katalog (pelabuhan/kapal/rute/jadwal admin), booking, tiket, infrastruktur HTTP |
-| Backend, unit | `backend/tests/unit/*.test.js` | utils, middleware, skema zod, config/db/init/seed, `server.js`, service (booking, tiket, jadwal) |
-| Frontend | `frontend/src/**/*.test.js` di samping file yang diuji | api, store, composable, util, komponen, view, router, `App.vue`, `main.js` |
-| Helper uji frontend | `frontend/src/test/helpers.js` | router uji, mount dengan Pinia, data contoh |
+| Backend, alur API | `backend/test/*.test.js` | auth, katalog (pelabuhan/kapal/rute/jadwal admin), booking, tiket, infrastruktur HTTP |
+| Backend, unit | `backend/test/unit/*.test.js` | utils, middleware, skema zod, config/db/init/seed, `server.js`, service (booking, tiket, jadwal) |
+| Frontend | `frontend/src/**/*.test.js` di samping file yang diuji | api, state (store), hook, helper, komponen, page, router, `App.vue`, `main.js` |
+| Helper uji frontend | `frontend/src/test-utils.js` (setup global di `frontend/src/setupTests.js`) | router uji, mount dengan Pinia, data contoh |
 
 Bagian `if (require.main === module)` pada `db/init.js` dan `db/seed.js` hanya berjalan lewat CLI (`npm run db:init`/`db:seed`) sehingga tidak terhitung di coverage.
 
@@ -171,8 +171,22 @@ Platform menerima ZIP dari Jenkins dan membangun aplikasinya. Pengaturan per apl
 ## Struktur
 
 ```
-backend/   Express API (modules/{auth,ports,boats,routes,schedules,bookings,tickets})
-frontend/  Vue 3 + Vite
-docs/      Draft dokumen proyek dan skrip video demo
+backend/                Express API
+  src/                  app.js, server.js, config/, db/, middlewares/, utils/,
+                        modules/{auth,ports,boats,routes,schedules,bookings,tickets}
+  test/                 tes alur API (*.test.js) dan test/unit/
+frontend/               Vue 3 + Vite (berbasis fitur)
+  src/
+    features/
+      admin/            api/, components/, pages/, adminConfigs.js
+      auth/             api/, pages/, states/
+      bookings/         api/, components/, pages/, states/
+      common/           components/ (AppHeader, Base*, AsyncState), pages/ (Home, NotFound)
+      schedules/        api/, components/, pages/
+    helpers/            apiHelper (axios), errorHelper, formatHelper
+    hooks/              useAsync, useCountdown, usePassengerForm
+    App.vue, main.js, router.js, index.css, setupTests.js, test-utils.js
+  Tes frontend (*.test.js) diletakkan di samping file yang diuji.
+docs/                   Draft dokumen proyek dan skrip video demo
 Jenkinsfile, sonar-project.properties
 ```

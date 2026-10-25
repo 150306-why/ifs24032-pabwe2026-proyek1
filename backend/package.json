@@ -39,7 +39,7 @@
   "jest": {
     "testEnvironment": "node",
     "setupFiles": [
-      "./tests/setupEnv.js"
+      "./test/setupEnv.js"
     ],
     "reporters": [
       "default",

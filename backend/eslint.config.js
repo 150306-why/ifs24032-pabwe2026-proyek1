@@ -10,7 +10,7 @@ module.exports = [
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_|^next$' }] },
   },
   {
-    files: ['tests/**/*.js'],
+    files: ['test/**/*.js'],
     languageOptions: { globals: { ...globals.jest } },
   },
 ];

@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 
 // api/http dipalsukan agar tidak ada permintaan jaringan; configureHttp dipantau.
-vi.mock('./api/http', () => ({
+vi.mock('./helpers/apiHelper', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
   configureHttp: vi.fn(),
 }));
-vi.mock('@/api/catalog', () => ({
+vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn().mockResolvedValue([]),
   fetchSchedules: vi.fn(),
   fetchSchedule: vi.fn(),
@@ -15,8 +15,8 @@ vi.mock('@/api/catalog', () => ({
 describe('main.js', () => {
   it('memasang aplikasi ke #app dan menghubungkan token serta penanganan 401', async () => {
     document.body.innerHTML = '<div id="app"></div>';
-    const { configureHttp } = await import('./api/http');
-    const { useAuthStore } = await import('@/stores/auth');
+    const { configureHttp } = await import('./helpers/apiHelper');
+    const { useAuthStore } = await import('@/features/auth/states/authStore');
     const { default: router } = await import('@/router');
 
     await import('./main');
