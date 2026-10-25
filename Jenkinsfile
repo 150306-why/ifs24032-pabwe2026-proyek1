@@ -31,6 +31,8 @@ pipeline {
     environment {
         CI = 'true'
         VITE_API_URL = "${params.VITE_API_URL}"
+        WEBSITE_ID_BACKEND = '<id-backend>'
+        WEBSITE_ID_FRONTEND = '<id-frontend>'
     }
 
     stages {
