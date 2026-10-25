@@ -13,7 +13,7 @@ import * as authApi from '@/features/auth/api/authApi';
 import LoginPage from './LoginPage.vue';
 
 async function fillAndSubmit(wrapper, email, password) {
-  await wrapper.find('#email').setValue(email);
+  await wrapper.find('#username').setValue(email);
   await wrapper.find('#password').setValue(password);
   await wrapper.find('form').trigger('submit');
   await flushPromises();

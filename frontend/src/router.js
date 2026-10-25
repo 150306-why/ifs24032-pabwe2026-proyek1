@@ -6,7 +6,7 @@ const routes = [
   { path: '/', name: 'home', component: HomePage },
   { path: '/jadwal', name: 'schedules', component: () => import('@/features/schedules/pages/SchedulesPage.vue') },
   { path: '/jadwal/:id', name: 'schedule-detail', component: () => import('@/features/schedules/pages/ScheduleDetailPage.vue') },
-  { path: '/masuk', name: 'login', component: () => import('@/features/auth/pages/LoginPage.vue'), meta: { guestOnly: true } },
+  { path: '/masuk', alias: '/auth/login', name: 'login', component: () => import('@/features/auth/pages/LoginPage.vue'), meta: { guestOnly: true } },
   { path: '/daftar', name: 'register', component: () => import('@/features/auth/pages/RegisterPage.vue'), meta: { guestOnly: true } },
   { path: '/tiket-saya', name: 'my-bookings', component: () => import('@/features/bookings/pages/MyBookingsPage.vue'), meta: { requiresAuth: true } },
   { path: '/booking/:code', name: 'booking-detail', component: () => import('@/features/bookings/pages/BookingDetailPage.vue'), meta: { requiresAuth: true } },
