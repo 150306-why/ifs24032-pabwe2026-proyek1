@@ -23,7 +23,7 @@ const cancelling = ref(false);
 const cancelError = ref('');
 
 async function cancel() {
-  if (!window.confirm('Batalkan booking ini?')) return;
+  if (!globalThis.confirm('Batalkan booking ini?')) return;
   cancelling.value = true;
   cancelError.value = '';
   try {
@@ -36,7 +36,7 @@ async function cancel() {
   }
 }
 
-const print = () => window.print();
+const print = () => globalThis.print();
 
 onMounted(loader.run);
 </script>

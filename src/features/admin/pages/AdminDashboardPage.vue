@@ -58,12 +58,13 @@ onMounted(loader.run);
               <h2 class="text-lg font-bold text-lake-900">Pendapatan 7 hari terakhir</h2>
               <p class="text-sm text-slate-500">Booking lunas, per hari booking dibuat</p>
             </div>
-            <div class="flex h-48 items-end gap-3 border-b border-lake-100 pb-px" role="img" :aria-label="`Grafik pendapatan 7 hari, total ${formatRupiah(weekTotal)}`">
+            <figure class="m-0 flex h-48 items-end gap-3 border-b border-lake-100 pb-px">
+              <figcaption class="sr-only">{{ `Grafik pendapatan 7 hari, total ${formatRupiah(weekTotal)}` }}</figcaption>
               <div v-for="(d, i) in stats.revenue_by_day" :key="d.date" class="flex h-full flex-1 flex-col items-center justify-end gap-1">
                 <span class="text-[11px] font-medium text-slate-500">{{ d.total ? formatRupiah(d.total).replace('Rp', '') : '' }}</span>
                 <div class="w-full rounded-t-lg" :class="i === stats.revenue_by_day.length - 1 ? 'bg-ulos-600' : 'bg-lake-600'" :style="{ height: barHeight(d.total) }" :title="`${d.date}: ${formatRupiah(d.total)}`"></div>
               </div>
-            </div>
+            </figure>
             <div class="mt-2 flex gap-3">
               <span v-for="d in stats.revenue_by_day" :key="d.date" class="flex-1 text-center text-xs text-slate-500">{{ dayLabel(d.date) }}</span>
             </div>

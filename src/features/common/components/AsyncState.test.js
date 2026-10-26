@@ -12,7 +12,7 @@ describe('AsyncState', () => {
 
   it('loading menampilkan indikator dan menyembunyikan konten', () => {
     const wrapper = render({ loading: true });
-    expect(wrapper.attributes('role')).toBe('status');
+    expect(wrapper.element.tagName).toBe('OUTPUT');
     expect(wrapper.text()).toContain('Memuat');
     expect(wrapper.text()).not.toContain('ISI');
   });

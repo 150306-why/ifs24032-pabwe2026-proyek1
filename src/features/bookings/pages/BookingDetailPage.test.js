@@ -31,7 +31,7 @@ describe('BookingDetailPage', () => {
   let confirm;
   beforeEach(() => {
     vi.clearAllMocks();
-    confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    confirm = vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
   });
   afterEach(() => { confirm.mockRestore(); });
 

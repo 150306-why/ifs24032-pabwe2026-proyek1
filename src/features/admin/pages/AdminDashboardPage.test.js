@@ -55,7 +55,7 @@ describe('AdminDashboardPage', () => {
   it('grafik 7 hari punya tabel alternatif untuk pembaca layar', async () => {
     const { wrapper } = await render();
     expect(wrapper.findAll('table.sr-only tr')).toHaveLength(7);
-    expect(wrapper.find('[role="img"]').attributes('aria-label')).toContain('Rp');
+    expect(wrapper.find('figure figcaption').text()).toContain('Rp');
   });
 
   it('keberangkatan hari ini menampilkan keterisian kursi', async () => {

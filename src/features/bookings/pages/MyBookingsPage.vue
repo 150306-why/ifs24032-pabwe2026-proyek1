@@ -40,11 +40,11 @@ onMounted(loader.run);
         <RouterLink to="/jadwal" class="mt-4 inline-flex rounded-xl bg-ulos-600 px-5 py-2.5 font-semibold text-white hover:bg-ulos-700">Cari jadwal</RouterLink>
       </template>
 
-      <div class="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter status">
+      <fieldset class="m-0 mb-4 flex min-w-0 flex-wrap gap-2 border-0 p-0" aria-label="Filter status">
         <button v-for="f in FILTERS" :key="f.value" class="chip" :aria-pressed="filter === f.value" @click="filter = f.value">
           {{ f.label }} <span class="opacity-70">{{ countOf(f.value) }}</span>
         </button>
-      </div>
+      </fieldset>
 
       <p v-if="visible.length === 0" class="card-flat px-6 py-10 text-center text-slate-600">Tidak ada pesanan dengan status ini.</p>
       <ul v-else class="space-y-3">

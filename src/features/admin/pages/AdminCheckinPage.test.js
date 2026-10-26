@@ -46,7 +46,7 @@ describe('AdminCheckinPage', () => {
     const { wrapper } = await mountWithApp(AdminCheckinPage, { route: '/admin/checkin' });
     await submit(wrapper, '  tk-abc123 ');
     expect(checkInTicket).toHaveBeenCalledWith('TK-ABC123');
-    const status = wrapper.find('[role="status"]');
+    const status = wrapper.find('output');
     expect(status.text()).toContain('Check-in berhasil');
     expect(status.text()).toContain('B*** S******');
     expect(status.text()).toContain('Ajibata → Tomok');
@@ -59,10 +59,10 @@ describe('AdminCheckinPage', () => {
     checkInTicket.mockRejectedValueOnce(apiError('Tiket sudah check-in', undefined, 409));
     const { wrapper } = await mountWithApp(AdminCheckinPage, { route: '/admin/checkin' });
     await submit(wrapper, 'TK-1');
-    expect(wrapper.find('[role="status"]').exists()).toBe(true);
+    expect(wrapper.find('output').exists()).toBe(true);
 
     await submit(wrapper, 'TK-1');
     expect(wrapper.find('[role="alert"]').text()).toBe('Tiket sudah check-in');
-    expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    expect(wrapper.find('output').exists()).toBe(false);
   });
 });

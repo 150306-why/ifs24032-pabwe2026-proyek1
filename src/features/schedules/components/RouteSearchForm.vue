@@ -8,7 +8,7 @@ import BaseSelect from '@/features/common/components/BaseSelect.vue';
 
 const props = defineProps({
   ports: { type: Array, default: () => [] },
-  initial: { type: Object, default: () => ({}) }, // { origin, destination, date }
+  initial: { type: Object, default: () => ({}) }, // berisi origin, destination, dan date
   submitLabel: { type: String, default: 'Cari jadwal' },
 });
 const emit = defineEmits(['search']);

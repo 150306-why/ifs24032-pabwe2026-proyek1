@@ -49,12 +49,12 @@ async function submit() {
         <p v-if="error" class="flex items-start gap-3 rounded-2xl border border-ulos-200 bg-ulos-50 p-4 font-medium text-ulos-700" role="alert">
           <AppIcon name="alert" :size="22" class="mt-0.5" /> {{ error }}
         </p>
-        <div v-if="result" class="rounded-2xl border border-pine-100 bg-pine-50 p-5 text-pine-800" role="status">
+        <output v-if="result" class="block rounded-2xl border border-pine-100 bg-pine-50 p-5 text-pine-800">
           <p class="flex items-center gap-2 text-lg font-bold"><AppIcon name="check" :size="22" /> Check-in berhasil</p>
           <p class="mt-2 text-lg font-semibold text-lake-900">{{ result.passenger_name }} <span class="text-sm font-medium capitalize text-slate-600">({{ result.category }})</span></p>
           <p>{{ result.origin }} → {{ result.destination }}</p>
           <p class="text-sm">{{ formatDateTime(result.departure_at) }}</p>
-        </div>
+        </output>
       </div>
 
       <div class="card lg:col-span-2">

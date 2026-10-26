@@ -12,7 +12,10 @@ export function useCountdown(targetIso) {
     remainingMs.value = Math.max(0, new Date(targetIso.value).getTime() - Date.now());
     if (remainingMs.value === 0) stop();
   };
-  const stop = () => { if (timer) clearInterval(timer); timer = null; };
+  const stop = () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+  };
 
   watch(targetIso, (value) => {
     stop();

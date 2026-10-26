@@ -109,7 +109,7 @@ async function save() {
 }
 
 async function remove(row) {
-  if (!window.confirm('Hapus data ini?')) return;
+  if (!globalThis.confirm('Hapus data ini?')) return;
   message.value = '';
   try {
     await config.value.api.remove(row.id);
@@ -192,7 +192,7 @@ onMounted(init);
     </AsyncState>
 
     <div v-if="showForm" class="fixed inset-0 z-50 flex items-end justify-center bg-lake-950/60 p-0 sm:items-center sm:p-4" @keydown.esc="resetForm">
-      <div ref="dialog" class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white shadow-pass sm:rounded-3xl" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <dialog ref="dialog" open class="static m-0 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border-0 bg-white p-0 text-ink shadow-pass sm:rounded-3xl" aria-modal="true" aria-labelledby="dialog-title">
         <div class="ulos-band ulos-band-thin" aria-hidden="true"></div>
         <form class="grid gap-4 p-6 sm:grid-cols-2" novalidate @submit.prevent="save">
           <h2 id="dialog-title" class="text-xl font-bold text-lake-900 sm:col-span-2">{{ isEdit ? 'Ubah' : 'Tambah' }} {{ config.singular }}</h2>
@@ -206,7 +206,7 @@ onMounted(init);
             <BaseButton variant="secondary" @click="resetForm">Batal</BaseButton>
           </div>
         </form>
-      </div>
+      </dialog>
     </div>
   </section>
 </template>

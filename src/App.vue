@@ -5,6 +5,7 @@ import AppHeader from '@/features/common/components/AppHeader.vue';
 import AppFooter from '@/features/common/components/AppFooter.vue';
 import AdminLayout from '@/features/admin/components/AdminLayout.vue';
 import ToastHost from '@/features/common/components/ToastHost.vue';
+import MainContent from '@/features/common/components/MainContent.vue';
 
 const route = useRoute();
 // meta.layout: 'admin' (sidebar), 'bare' (layar penuh, mis. halaman masuk), selain itu layout publik.
@@ -18,20 +19,14 @@ const layout = computed(() => route.meta?.layout || 'public');
     </a>
 
     <AdminLayout v-if="layout === 'admin'">
-      <main id="main" class="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8 lg:py-8">
-        <RouterView />
-      </main>
+      <MainContent class="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8 lg:py-8" />
     </AdminLayout>
 
-    <main v-else-if="layout === 'bare'" id="main">
-      <RouterView />
-    </main>
+    <MainContent v-else-if="layout === 'bare'" />
 
     <div v-else class="flex min-h-screen flex-col">
       <AppHeader />
-      <main id="main" class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <RouterView />
-      </main>
+      <MainContent class="mx-auto w-full max-w-6xl flex-1 px-4 py-8" />
       <AppFooter />
     </div>
 

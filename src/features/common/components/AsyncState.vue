@@ -11,10 +11,10 @@ defineEmits(['retry']);
 </script>
 
 <template>
-  <div v-if="loading" class="py-14 text-center text-slate-600" role="status" aria-live="polite">
-    <div class="mx-auto mb-3 h-9 w-9 animate-spin rounded-full border-4 border-lake-100 border-t-lake-700"></div>
+  <output v-if="loading" class="block py-14 text-center text-slate-600" aria-live="polite">
+    <span class="mx-auto mb-3 block h-9 w-9 animate-spin rounded-full border-4 border-lake-100 border-t-lake-700"></span>
     Memuat…
-  </div>
+  </output>
   <div v-else-if="error" class="card border-ulos-200 text-center" role="alert">
     <AppIcon name="alert" :size="28" class="mx-auto mb-2 text-ulos-600" />
     <p class="mb-3 font-medium text-ulos-700">{{ error }}</p>

@@ -41,9 +41,9 @@ onMounted(loader.run);
     <AdminPageHeader title="Pengguna" lead="Akun pelanggan dan admin beserta aktivitas pemesanannya." />
 
     <div class="mb-4 flex flex-wrap items-center gap-3">
-      <div class="flex gap-2" role="group" aria-label="Filter peran">
+      <fieldset class="m-0 flex min-w-0 gap-2 border-0 p-0" aria-label="Filter peran">
         <button v-for="r in ROLES" :key="r.value" class="chip" :aria-pressed="filters.role === r.value" @click="setRole(r.value)">{{ r.label }}</button>
-      </div>
+      </fieldset>
       <form class="relative ml-auto w-full sm:w-72" role="search" @submit.prevent="reload()">
         <AppIcon name="search" :size="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input v-model="filters.q" type="search" class="input !pl-10" placeholder="Nama atau email" aria-label="Cari pengguna" />

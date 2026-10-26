@@ -54,7 +54,7 @@ describe('AdminResourcePage', () => {
     apis['/boats'].list.mockResolvedValue(BOATS);
     apis['/routes'].list.mockResolvedValue(ROUTES);
     apis['/schedules'].listPaged.mockResolvedValue({ items: SCHEDULES, pagination: { page: 1, limit: 10, total: 1 } });
-    confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    confirm = vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
   });
 
   afterEach(() => { confirm.mockRestore(); });

@@ -34,7 +34,7 @@ describe('AdminBookingsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     fetchAdminBookings.mockResolvedValue(PAGE([item('TT-1', 'paid'), item('TT-2', 'cancelled')]));
-    confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    confirm = vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
   });
   afterEach(() => { confirm.mockRestore(); });
 

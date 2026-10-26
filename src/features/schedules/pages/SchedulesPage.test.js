@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import { apiError, findByText, mountWithApp, SAMPLE_SCHEDULE } from '@/test-utils';
+import { dateInputFromToday } from '@/helpers/formatHelper';
 
 vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchPorts: vi.fn(),
@@ -9,7 +10,7 @@ vi.mock('@/features/schedules/api/catalogApi', () => ({
   fetchSchedule: vi.fn(),
 }));
 
-import { fetchSchedules } from '@/features/schedules/api/catalogApi';
+import { fetchPorts, fetchSchedules } from '@/features/schedules/api/catalogApi';
 import SchedulesPage from './SchedulesPage.vue';
 
 const result = (items, pagination) => ({ items, pagination });
@@ -75,5 +76,37 @@ describe('SchedulesPage', () => {
     await findByText(wrapper, 'button', 'Sebelumnya').trigger('click');
     await flushPromises();
     expect(router.currentRoute.value.query.page).toBe('2');
+  });
+
+  it('tanpa parameter date, chip tanggal cepat tidak ditampilkan', async () => {
+    const { wrapper } = await render();
+    expect(wrapper.find('fieldset').exists()).toBe(false);
+  });
+
+  it('dengan date: 7 chip tanggal, memilih chip mengganti date dan mengembalikan ke halaman 1', async () => {
+    const { wrapper, router } = await render('/jadwal?origin=1&destination=2&date=2030-01-01&page=2');
+    const chips = wrapper.findAll('fieldset button.chip');
+    expect(chips).toHaveLength(7);
+    expect(chips[0].text()).toBe('Hari ini');
+
+    await chips[1].trigger('click');
+    await flushPromises();
+    const { query } = router.currentRoute.value;
+    expect(query.date).toBe(dateInputFromToday(1));
+    expect(query.page).toBeUndefined();
+    expect(fetchSchedules).toHaveBeenLastCalledWith({
+      origin: '1', destination: '2', date: dateInputFromToday(1), limit: 10,
+    });
+  });
+
+  it('judul memakai nama pelabuhan bila daftar pelabuhan termuat', async () => {
+    fetchPorts.mockResolvedValue([{ id: 1, name: 'Ajibata' }, { id: 2, name: 'Tomok' }]);
+    const { wrapper } = await render();
+    expect(wrapper.find('h1').text()).toBe('Ajibata → Tomok');
+  });
+
+  it('judul bawaan bila pelabuhan belum diketahui', async () => {
+    const { wrapper } = await render();
+    expect(wrapper.find('h1').text()).toBe('Jadwal tersedia');
   });
 });

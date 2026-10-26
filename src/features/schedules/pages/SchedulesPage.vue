@@ -46,9 +46,9 @@ const goToPage = (page) => router.push({ query: { ...route.query, page } });
       <RouteSearchForm :ports="ports.data.value || []" :initial="route.query" submit-label="Ubah pencarian" @search="search" />
     </div>
 
-    <div v-if="route.query.date" class="mb-5 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Pilih tanggal cepat">
+    <fieldset v-if="route.query.date" class="m-0 mb-5 flex min-w-0 gap-2 overflow-x-auto border-0 p-0 pb-1" aria-label="Pilih tanggal cepat">
       <button v-for="d in dayChips" :key="d.value" class="chip shrink-0" :aria-pressed="route.query.date === d.value" @click="pickDate(d.value)">{{ d.label }}</button>
-    </div>
+    </fieldset>
 
     <AsyncState
       :loading="schedules.loading.value"

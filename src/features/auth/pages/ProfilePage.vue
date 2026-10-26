@@ -3,6 +3,7 @@ import { reactive, ref, watch } from 'vue';
 import { useAuthStore } from '@/features/auth/states/authStore';
 import { useToastStore } from '@/features/common/states/toastStore';
 import { getErrorMessage, getFieldErrors } from '@/helpers/errorHelper';
+import { FORM_MESSAGES } from '@/helpers/validationHelper';
 import BaseButton from '@/features/common/components/BaseButton.vue';
 import BaseInput from '@/features/common/components/BaseInput.vue';
 import AppIcon from '@/features/common/components/AppIcon.vue';
@@ -44,9 +45,9 @@ async function savePassword() {
   pwdErrors.value = {};
   pwdMessage.value = '';
   const e = {};
-  if (!pwd.current_password) e.current_password = 'Password saat ini wajib diisi';
-  if (pwd.new_password.length < 8) e.new_password = 'Password baru minimal 8 karakter';
-  if (pwd.confirm !== pwd.new_password) e.confirm = 'Konfirmasi password tidak sama';
+  if (!pwd.current_password) e.current_password = FORM_MESSAGES.currentSecretRequired;
+  if (pwd.new_password.length < 8) e.new_password = FORM_MESSAGES.newSecretTooShort;
+  if (pwd.confirm !== pwd.new_password) e.confirm = FORM_MESSAGES.confirmMismatch;
   if (Object.keys(e).length) {
     pwdErrors.value = e;
     return;
@@ -86,7 +87,7 @@ async function savePassword() {
     <div class="grid gap-6 md:grid-cols-2">
       <form class="card space-y-4" novalidate @submit.prevent="saveProfile">
         <h2 class="text-lg font-bold text-lake-900">Data akun</h2>
-        <BaseInput id="profile-name" v-model="profile.name" label="Nama lengkap" autocomplete="name" :error="profileErrors.name" />
+        <BaseInput id="profile-name" v-model="profile.name" type="text" label="Nama lengkap" autocomplete="name" :error="profileErrors.name" />
         <BaseInput id="profile-email" :model-value="auth.user?.email" label="Email" disabled hint="Email tidak bisa diubah." />
         <p v-if="profileMessage" class="text-sm font-medium text-ulos-700" role="alert">{{ profileMessage }}</p>
         <BaseButton type="submit" :loading="savingProfile">Simpan profil</BaseButton>

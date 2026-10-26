@@ -41,7 +41,7 @@ const setStatus = (value) => { filters.status = value; reload(); };
 const goToPage = (page) => { filters.page = page; reload(false); };
 
 async function cancel(booking) {
-  if (!window.confirm(`Batalkan booking ${booking.code}? Kursi akan dikembalikan.`)) return;
+  if (!globalThis.confirm(`Batalkan booking ${booking.code}? Kursi akan dikembalikan.`)) return;
   actionError.value = '';
   busyCode.value = booking.code;
   try {
@@ -63,9 +63,9 @@ onMounted(loader.run);
     <AdminPageHeader title="Booking" lead="Semua pesanan dari seluruh pelanggan." />
 
     <div class="mb-4 flex flex-wrap items-center gap-3">
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter status">
+      <fieldset class="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0" aria-label="Filter status">
         <button v-for="f in FILTERS" :key="f.value" class="chip" :aria-pressed="filters.status === f.value" @click="setStatus(f.value)">{{ f.label }}</button>
-      </div>
+      </fieldset>
       <form class="relative ml-auto w-full sm:w-72" role="search" @submit.prevent="reload()">
         <AppIcon name="search" :size="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input v-model="filters.q" type="search" class="input !pl-10" placeholder="Kode, nama, atau email" aria-label="Cari booking" />

@@ -5,7 +5,7 @@ import LoginForm from '@/features/auth/components/LoginForm.vue';
 
 <template>
   <AuthShell admin title="Masuk admin" lead="Kelola jadwal, booking, dan check-in penumpang.">
-    <LoginForm role="admin" />
+    <LoginForm mode="admin" />
     <template #footer>
       <p>Bukan petugas? <RouterLink to="/masuk" class="link">Masuk sebagai pelanggan</RouterLink></p>
     </template>
